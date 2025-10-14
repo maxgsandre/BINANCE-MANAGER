@@ -1,0 +1,52 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  name         String
+  apiKeyEnc    String
+  apiSecretEnc String
+  market       String
+  createdAt    DateTime @default(now())
+  trades       Trade[]
+  cashflows    Cashflow[]
+}
+
+model Trade {
+  id           String   @id @default(cuid())
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id])
+  exchange     String
+  market       String
+  symbol       String
+  side         String
+  qty          Decimal  @db.Decimal(38, 18)
+  price        Decimal  @db.Decimal(38, 18)
+  feeValue     Decimal  @db.Decimal(38, 18)
+  feeAsset     String
+  feePct       Decimal  @db.Decimal(38, 18)
+  realizedPnl  Decimal  @db.Decimal(38, 18)
+  orderId      String?
+  tradeId      String?
+  executedAt   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Cashflow {
+  id         String   @id @default(cuid())
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id])
+  type       String
+  asset      String
+  amount     Decimal  @db.Decimal(38, 18)
+  at         DateTime
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+
