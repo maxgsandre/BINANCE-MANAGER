@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getTrades } from '@/src/lib/trades';
+import { getTrades } from '@/lib/trades';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
