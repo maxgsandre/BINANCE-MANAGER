@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+export const runtime = 'nodejs';
 import { prisma } from '@/lib/prisma';
 import { monthRange } from '@/lib/format';
 import { Prisma } from '@prisma/client';
