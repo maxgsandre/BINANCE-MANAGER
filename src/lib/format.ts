@@ -1,4 +1,4 @@
-import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
 
 export function fmtCurrencyBRL(value: number | string): string {
   const num = typeof value === 'string' ? Number(value) : value;

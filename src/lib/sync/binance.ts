@@ -14,11 +14,12 @@ export interface SyncResult {
   updated: number;
 }
 
-export async function syncAccount(_account: { id: string; market: string }): Promise<SyncResult> {
+export async function syncAccount(account: { id: string; market: string }): Promise<SyncResult> {
   // Placeholder until real integration. This should:
   // 1) Decrypt credentials (later libsodium; for now, API will store Base64 temporarily).
   // 2) Fetch trades/cashflows from Binance.
   // 3) Upsert into Trade/Cashflow with idempotency.
+  void account;
   return { inserted: 0, updated: 0 };
 }
 

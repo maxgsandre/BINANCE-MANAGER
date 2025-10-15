@@ -34,15 +34,30 @@ export default function TradesPage() {
   const [rows, setRows] = useState<TradeRow[]>([]);
 
   useEffect(() => {
+    type ApiTrade = {
+      executedAt: string | Date;
+      exchange: string;
+      market: string;
+      symbol: string;
+      side: string;
+      qty: string;
+      price: string;
+      feeValue: string;
+      feeAsset: string;
+      feePct: string;
+      realizedPnl: string;
+      orderId?: string | null;
+      tradeId?: string | null;
+    };
     const params = new URLSearchParams({ month, page: String(page), pageSize: String(pageSize) });
     if (market) params.set('market', market);
     if (symbol) params.set('symbol', symbol);
     fetch(`/api/trades?${params.toString()}`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => {
+      .then((d: { total: number; rows: ApiTrade[] }) => {
         setTotal(d.total);
         setRows(
-          d.rows.map((t: any) => ({
+          d.rows.map((t: ApiTrade) => ({
             executedAt: new Date(t.executedAt).toISOString(),
             exchange: t.exchange,
             market: t.market,
@@ -54,8 +69,8 @@ export default function TradesPage() {
             feeAsset: t.feeAsset,
             feePct: t.feePct,
             realizedPnl: t.realizedPnl,
-            orderId: t.orderId,
-            tradeId: t.tradeId,
+            orderId: t.orderId ?? undefined,
+            tradeId: t.tradeId ?? undefined,
           }))
         );
       });
@@ -78,7 +93,7 @@ export default function TradesPage() {
       columnHelper.accessor('orderId', { header: 'orderId' }),
       columnHelper.accessor('tradeId', { header: 'tradeId' }),
     ],
-    []
+    [columnHelper]
   );
 
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() });

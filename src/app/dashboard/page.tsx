@@ -3,8 +3,15 @@ import { Kpi } from '@/components/Kpi';
 import { Toolbar } from '@/components/Toolbar';
 import { PnlLineChart } from '@/components/PnlLineChart';
 
-async function fetchTrades(month: string) {
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/trades?month=${encodeURIComponent(month)}`;
+type TradeRow = { executedAt: string | Date; realizedPnl: string };
+type TradesResponse = {
+  rows: TradeRow[];
+  total: number;
+  summary: { pnlMonth: string; feesTotal: string; avgFeePct: string; tradesCount: number; winRate: number };
+};
+
+async function fetchTrades(month: string): Promise<TradesResponse> {
+  const url = `/api/trades?month=${encodeURIComponent(month)}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('failed to fetch');
   return res.json();
@@ -15,7 +22,7 @@ function getMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function aggregateDaily(rows: any[]) {
+function aggregateDaily(rows: TradeRow[]) {
   const map = new Map<string, number>();
   for (const r of rows) {
     const d = new Date(r.executedAt).toISOString().slice(0, 10);

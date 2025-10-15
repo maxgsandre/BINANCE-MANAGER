@@ -1,14 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        pdfkit: false,
-        fontkit: false,
-      },
-    },
-  },
-};
+// Limpando quaisquer campos experimentais antigos que possam ter ficado no cache
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   const { start, end } = monthRange(month);
 
-  const where: any = {
+  const where = {
     executedAt: { gte: start, lte: end },
     ...(market ? { market } : {}),
     ...(symbol ? { symbol } : {}),

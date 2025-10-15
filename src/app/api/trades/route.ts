@@ -12,8 +12,9 @@ export async function GET(req: NextRequest) {
   try {
     const data = await getTrades({ month, market, symbol, page, pageSize });
     return Response.json(data, { status: 200 });
-  } catch (err: any) {
-    return Response.json({ error: err?.message || 'internal error' }, { status: 400 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'internal error';
+    return Response.json({ error: message }, { status: 400 });
   }
 }
 
