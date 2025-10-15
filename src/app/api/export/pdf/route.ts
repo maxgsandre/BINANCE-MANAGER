@@ -4,9 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { monthRange } from '@/lib/format';
 import { Prisma } from '@prisma/client';
 
-// pdfkit is CJS; import via require to avoid TS/ESM interop issues
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const PDFDocument = require('pdfkit');
+// pdfkit import será lazy para evitar puxar dependências pesadas no build
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -44,7 +42,8 @@ export async function GET(req: NextRequest) {
   }
   const roi = bankroll.equals(0) ? new Prisma.Decimal(0) : pnl.dividedBy(bankroll);
 
-  // Build PDF
+  // Build PDF (lazy import)
+  const PDFDocument = (await import('pdfkit')).default || require('pdfkit');
   const doc = new PDFDocument({ size: 'A4', margin: 48 });
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
