@@ -2,6 +2,7 @@ import { Card } from '@/components/Card';
 import { Kpi } from '@/components/Kpi';
 import { Toolbar } from '@/components/Toolbar';
 import { PnlLineChart } from '@/components/PnlLineChart';
+import { headers } from 'next/headers';
 
 type TradeRow = { executedAt: string | Date; realizedPnl: string };
 type TradesResponse = {
@@ -11,7 +12,10 @@ type TradesResponse = {
 };
 
 async function fetchTrades(month: string): Promise<TradesResponse> {
-  const url = `/api/trades?month=${encodeURIComponent(month)}`;
+  const h = headers();
+  const proto = h.get('x-forwarded-proto') ?? 'http';
+  const host = h.get('host') ?? 'localhost:3000';
+  const url = `${proto}://${host}/api/trades?month=${encodeURIComponent(month)}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('failed to fetch');
   return res.json();
