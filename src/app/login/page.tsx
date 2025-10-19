@@ -39,16 +39,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        {/* Logo completa */}
+        {/* Logo símbolo */}
         <div className="text-center mb-8">
           <Image
-            src="/logo-full.png"
+            src="/logo-symbol.png"
             alt="Cripto Manager"
             width={200}
-            height={80}
-            className="mx-auto h-20 w-auto"
+            height={200}
+            className="mx-auto h-40 w-40 mb-4"
           />
-          <h1 className="text-2xl font-bold text-white mt-4">Cripto Manager</h1>
+          <h1 className="text-3xl font-bold text-white">Cripto Manager</h1>
           <p className="text-slate-400 mt-2">Painel profissional de gestão de trades</p>
         </div>
 
