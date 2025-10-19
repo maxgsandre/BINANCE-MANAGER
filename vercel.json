@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/jobs/sync-all",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 1 * * *"
     }
   ],
   "functions": {
