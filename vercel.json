@@ -4,10 +4,5 @@
       "path": "/api/jobs/sync-all",
       "schedule": "0 1 * * *"
     }
-  ],
-  "functions": {
-    "src/app/api/export/pdf/route.ts": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  ]
 }
