@@ -247,8 +247,7 @@ export default function AccountsPage() {
           </div>
         </div>
       </div>
+      </div>
     </InternalLayout>
   );
 }
-
-

@@ -72,13 +72,15 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
                   <p className="text-sm text-white">{user.name || user.email}</p>
                   <p className="text-xs text-slate-400">Online</p>
                 </div>
-                {user.image ? (
-                  <img
-                    src={user.image}
-                    alt="User"
-                    className="w-8 h-8 rounded-full"
-                  />
-                ) : (
+                       {user.image ? (
+                         <Image
+                           src={user.image}
+                           alt="User"
+                           width={32}
+                           height={32}
+                           className="w-8 h-8 rounded-full"
+                         />
+                       ) : (
                   <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">
                       {user.name?.charAt(0) || user.email?.charAt(0) || 'U'}

@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao criar usuário:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

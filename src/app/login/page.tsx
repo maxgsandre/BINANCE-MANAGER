@@ -2,10 +2,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function LoginPage() {
           <h2 className="text-xl font-semibold text-white mb-6 text-center">
             Acesse sua conta
           </h2>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <p className="text-red-400 text-sm">{error}</p>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 required
               />
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
                 Senha
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 required
               />
             </div>
-            
+
             <button
               type="submit"
               disabled={isLoading}
@@ -118,17 +118,17 @@ export default function LoginPage() {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
-          
+
           <div className="mt-6 text-center">
-            <Link 
-              href="/register" 
+            <Link
+              href="/register"
               className="text-sm text-slate-400 hover:text-white transition-colors"
             >
               Não tem conta? Criar conta
             </Link>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-xs text-slate-500">
@@ -137,5 +137,20 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

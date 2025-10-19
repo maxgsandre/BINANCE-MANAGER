@@ -475,8 +475,7 @@ export default function TradesPage() {
           </select>
         </div>
       </div>
+      </div>
     </InternalLayout>
   );
 }
-
-

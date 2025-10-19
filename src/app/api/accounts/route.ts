@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const accounts = await prisma.account.findMany({ orderBy: { createdAt: 'desc' } });
+  const accounts = await prisma.binanceAccount.findMany({ orderBy: { createdAt: 'desc' } });
   return Response.json({ rows: accounts });
 }
 
@@ -21,8 +21,11 @@ export async function POST(req: NextRequest) {
   const apiKeyEnc = Buffer.from(apiKey, 'utf8').toString('base64');
   const apiSecretEnc = Buffer.from(apiSecret, 'utf8').toString('base64');
 
-  const acc = await prisma.account.create({
-    data: { name, market, apiKeyEnc, apiSecretEnc },
+  // TODO: Obter userId da sessão autenticada
+  const userId = 'temp-user-id'; // Placeholder até implementar autenticação
+
+  const acc = await prisma.binanceAccount.create({
+    data: { userId, name, market, apiKeyEnc, apiSecretEnc },
   });
   return Response.json({ ok: true, account: acc }, { status: 201 });
 }

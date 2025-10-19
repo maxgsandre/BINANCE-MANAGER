@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const accounts = await prisma.account.findMany({});
+    const accounts = await prisma.binanceAccount.findMany({});
     
     if (accounts.length === 0) {
       return Response.json({ 
