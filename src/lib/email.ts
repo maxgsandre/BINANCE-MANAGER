@@ -55,7 +55,7 @@ export async function sendVerificationEmail(email: string, token: string, name: 
         
         <div style="background: #1e293b; padding: 20px; text-align: center;">
           <p style="color: #94a3b8; margin: 0; font-size: 12px;">
-            © 2024 Cripto Manager. Todos os direitos reservados.
+            © 2025 Cripto Manager. Todos os direitos reservados.
           </p>
         </div>
       </div>

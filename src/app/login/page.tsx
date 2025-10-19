@@ -132,7 +132,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-xs text-slate-500">
-            © 2024 Cripto Manager. Todos os direitos reservados.
+            © 2025 Cripto Manager. Todos os direitos reservados.
           </p>
         </div>
       </div>
