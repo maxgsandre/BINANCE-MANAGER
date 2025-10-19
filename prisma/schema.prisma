@@ -8,12 +8,60 @@ datasource db {
 }
 
 model Account {
+  id                String    @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?   @db.Text
+  access_token      String?   @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?   @db.Text
+  session_state     String?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  binanceAccounts BinanceAccount[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model BinanceAccount {
   id           String     @id @default(cuid())
+  userId       String
   name         String
   apiKeyEnc    String
   apiSecretEnc String
   market       String
   createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   cashflows    Cashflow[]
   trades       Trade[]
 }
@@ -36,7 +84,7 @@ model Trade {
   executedAt  DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  account     Account  @relation(fields: [accountId], references: [id])
+  account     BinanceAccount  @relation(fields: [accountId], references: [id])
 }
 
 model Cashflow {
@@ -48,5 +96,5 @@ model Cashflow {
   at        DateTime
   note      String?
   createdAt DateTime @default(now())
-  account   Account  @relation(fields: [accountId], references: [id])
+  account   BinanceAccount @relation(fields: [accountId], references: [id])
 }

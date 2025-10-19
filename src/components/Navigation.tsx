@@ -3,7 +3,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-export function Navigation() {
+interface User {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface NavigationProps {
+  user?: User;
+  onSignOut?: () => void;
+}
+
+export function Navigation({ user, onSignOut }: NavigationProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -32,25 +44,57 @@ export function Navigation() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-2">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-colors ${
-                    isActive
-                      ? 'bg-white/10 text-white hover:bg-white/15'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
+          <div className="flex items-center gap-4">
+            <nav className="flex items-center gap-2">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/10 text-white hover:bg-white/15'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* User Menu */}
+            {user && (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm text-white">{user.name || user.email}</p>
+                  <p className="text-xs text-slate-400">Online</p>
+                </div>
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt="User"
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">
+                      {user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={onSignOut}
+                  className="text-slate-400 hover:text-white transition-colors"
+                  title="Sair"
                 >
-                  <span className="text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+                  🚪
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
