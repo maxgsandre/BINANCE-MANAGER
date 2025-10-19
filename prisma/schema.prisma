@@ -40,6 +40,8 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  isVerified    Boolean   @default(false)
+  verificationToken String?
   accounts      Account[]
   sessions      Session[]
   binanceAccounts BinanceAccount[]
