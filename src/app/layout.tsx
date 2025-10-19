@@ -14,8 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Binance Manager",
-  description: "Painel pessoal de trades Binance",
+  title: "Cripto Manager",
+  description: "Painel profissional de gestão de trades de criptomoedas",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/logo-symbol.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/logo-symbol.png',
+  },
 };
 
 export default function RootLayout({
@@ -28,10 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950`}
       >
-        <Navigation />
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          {children}
-        </main>
+        {children}
       </body>
     </html>
   );

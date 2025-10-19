@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Toolbar } from '@/components/Toolbar';
+import InternalLayout from '@/components/InternalLayout';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 
 type TradeRow = {
@@ -269,7 +270,8 @@ export default function TradesPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="space-y-6">
+    <InternalLayout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl text-white mb-2">Trades</h1>
@@ -473,7 +475,7 @@ export default function TradesPage() {
           </select>
         </div>
       </div>
-    </div>
+    </InternalLayout>
   );
 }
 

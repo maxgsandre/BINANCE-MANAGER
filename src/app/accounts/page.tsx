@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import InternalLayout from '@/components/InternalLayout';
 
 type Account = { id: string; name: string; market: string; createdAt: string };
 
@@ -47,7 +48,8 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <InternalLayout>
+      <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -245,7 +247,7 @@ export default function AccountsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </InternalLayout>
   );
 }
 

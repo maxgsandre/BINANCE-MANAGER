@@ -1,6 +1,7 @@
 import { Card } from '@/components/Card';
 import { Kpi } from '@/components/Kpi';
 import { PnlLineChart } from '@/components/PnlLineChart';
+import InternalLayout from '@/components/InternalLayout';
 import { headers } from 'next/headers';
 
 type TradeRow = { executedAt: string | Date; realizedPnl: string };
@@ -54,7 +55,8 @@ export default async function DashboardPage() {
   const daily = aggregateDaily(rows);
 
   return (
-    <div className="space-y-8">
+    <InternalLayout>
+      <div className="space-y-8">
       {/* Page Title */}
       <div className="flex items-center justify-between">
         <div>
@@ -169,7 +171,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </InternalLayout>
   );
 }
 
