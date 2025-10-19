@@ -7,22 +7,27 @@ export function Navigation() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/trades', label: 'Trades', icon: '💰' },
-    { href: '/accounts', label: 'Accounts', icon: '🏪' },
+    { href: '/trades', label: 'Trades', icon: '🔥' },
+    { href: '/accounts', label: 'Accounts', icon: '👤' },
   ];
 
   return (
-    <nav className="bg-white shadow-lg border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <span className="text-2xl">🚀</span>
-              <span className="text-xl font-bold text-gray-900">Binance Manager</span>
-            </Link>
+    <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+              <span className="text-xl">💎</span>
+            </div>
+            <div>
+              <h1 className="text-white">Binance Manager</h1>
+              <p className="text-xs text-slate-400">Trading Dashboard</p>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-8">
+
+          {/* Navigation */}
+          <nav className="flex items-center gap-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -31,8 +36,8 @@ export function Navigation() {
                   href={item.href}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-white/10 text-white hover:bg-white/15'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
@@ -40,9 +45,9 @@ export function Navigation() {
                 </Link>
               );
             })}
-          </div>
+          </nav>
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

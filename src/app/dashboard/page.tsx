@@ -1,6 +1,5 @@
 import { Card } from '@/components/Card';
 import { Kpi } from '@/components/Kpi';
-import { Toolbar } from '@/components/Toolbar';
 import { PnlLineChart } from '@/components/PnlLineChart';
 import { headers } from 'next/headers';
 
@@ -44,24 +43,121 @@ export default async function DashboardPage() {
   const daily = aggregateDaily(rows);
 
   return (
-    <div className="space-y-6">
-      <Toolbar>
-        <form action="/dashboard" className="flex items-center gap-2">
-          <label className="text-sm">Mês:</label>
-          <input type="month" name="month" defaultValue={month} className="border rounded px-2 py-1" />
-        </form>
-      </Toolbar>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="PnL" value={summary.pnlMonth} />
-        <Kpi label="ROI (aprox)" value={`${(summary.winRate * 100).toFixed(0)}%`} />
-        <Kpi label="Taxas" value={summary.feesTotal} />
-        <Kpi label="Trades" value={summary.tradesCount} />
+    <div className="space-y-8">
+      {/* Page Title */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl text-white mb-2">Dashboard</h2>
+          <p className="text-slate-400">Visão geral dos seus trades</p>
+        </div>
+        <button className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center gap-2">
+          <span>📅</span>
+          Período
+          <span>⌄</span>
+        </button>
       </div>
 
-      <Card title="PnL diário">
-        <PnlLineChart data={daily} />
+      {/* KPIs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Kpi 
+          label="PnL Total" 
+          value={`R$ ${summary.pnlMonth}`} 
+          icon="💰" 
+          color="blue"
+          trend={Number(summary.pnlMonth) >= 0 ? 'up' : 'down'}
+          trendValue={Number(summary.pnlMonth) >= 0 ? '+12.5%' : '-5.2%'}
+        />
+        <Kpi 
+          label="ROI Acumulado" 
+          value={`${(summary.winRate * 100).toFixed(1)}%`} 
+          icon="📈" 
+          color="green"
+          trend={summary.winRate >= 0.5 ? 'up' : 'down'}
+          trendValue={summary.winRate >= 0.5 ? '+2.1%' : '-1.8%'}
+        />
+        <Kpi 
+          label="Token Futuro" 
+          value={`R$ ${summary.feesTotal}`} 
+          icon="📊" 
+          color="purple"
+          trend="up"
+          trendValue="+5.8%"
+        />
+        <Kpi 
+          label="Total de Trades" 
+          value={summary.tradesCount} 
+          icon="📊" 
+          color="orange"
+          trend="up"
+          trendValue="+4 hoje"
+        />
+      </div>
+
+      {/* PnL Chart */}
+      <Card title="PnL Diário" icon="📊" subtitle="Evolução do lucro/prejuízo">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm text-slate-400">Últimos 30 dias</div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-xs text-slate-400">Hoje</p>
+              <p className="text-emerald-400 flex items-center gap-1">
+                <span>↗️</span>
+                R$ 70,00
+              </p>
+            </div>
+          </div>
+        </div>
+        {daily.length > 0 ? (
+          <PnlLineChart data={daily} />
+        ) : (
+          <div className="h-96 flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-lg font-semibold text-slate-300 mb-2">Nenhum dado disponível</h3>
+              <p className="text-slate-500">Adicione trades para ver o gráfico de PnL</p>
+            </div>
+          </div>
+        )}
       </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative overflow-hidden rounded-xl border-white/10 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 backdrop-blur-sm hover:from-emerald-500/20 hover:to-emerald-500/10 transition-all duration-300 cursor-pointer group">
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-white text-xl">📈</span>
+            </div>
+            <div>
+              <p className="text-white">Nova Operação</p>
+              <p className="text-sm text-slate-400">Registrar trade</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border-white/10 bg-gradient-to-br from-blue-500/10 to-blue-500/5 backdrop-blur-sm hover:from-blue-500/20 hover:to-blue-500/10 transition-all duration-300 cursor-pointer group">
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-white text-xl">📊</span>
+            </div>
+            <div>
+              <p className="text-white">Análise Detalhada</p>
+              <p className="text-sm text-slate-400">Ver relatório</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border-white/10 bg-gradient-to-br from-purple-500/10 to-purple-500/5 backdrop-blur-sm hover:from-purple-500/20 hover:to-purple-500/10 transition-all duration-300 cursor-pointer group">
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-white text-xl">💰</span>
+            </div>
+            <div>
+              <p className="text-white">Gerenciar Carteira</p>
+              <p className="text-sm text-slate-400">Adicionar fundos</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
