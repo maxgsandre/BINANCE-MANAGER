@@ -11,13 +11,24 @@ type TradesResponse = {
 };
 
 async function fetchTrades(month: string): Promise<TradesResponse> {
-  const h = await headers();
-  const proto = h.get('x-forwarded-proto') ?? 'http';
-  const host = h.get('host') ?? 'localhost:3000';
-  const url = `${proto}://${host}/api/trades?month=${encodeURIComponent(month)}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('failed to fetch');
-  return res.json();
+  try {
+    const h = await headers();
+    const proto = h.get('x-forwarded-proto') ?? 'https';
+    const host = h.get('host') ?? 'localhost:3000';
+    const url = `${proto}://${host}/api/trades?month=${encodeURIComponent(month)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('failed to fetch');
+    return res.json();
+  } catch (error) {
+    // Fallback para produção
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
+    const url = `${baseUrl}/api/trades?month=${encodeURIComponent(month)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('failed to fetch');
+    return res.json();
+  }
 }
 
 function getMonth() {
