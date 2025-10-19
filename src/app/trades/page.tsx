@@ -171,7 +171,7 @@ export default function TradesPage() {
       columnHelper.accessor('symbol', { 
         header: '💰 Par Moeda',
         cell: ({ getValue }) => (
-          <span className="font-mono font-semibold text-blue-600">{getValue()}</span>
+          <span className="font-mono font-semibold text-blue-400">{getValue()}</span>
         )
       }),
       columnHelper.accessor('side', { 
@@ -181,7 +181,7 @@ export default function TradesPage() {
           const isBuy = side === 'BUY' || side === 'LONG';
           return (
             <span className={`px-2 py-1 rounded text-xs font-semibold ${
-              isBuy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              isBuy ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
             }`}>
               {side}
             </span>
@@ -215,7 +215,7 @@ export default function TradesPage() {
         cell: ({ row }) => {
           const volume = calculateVolume(row.original.qty, row.original.price);
           return (
-            <span className="font-mono font-semibold text-purple-600">
+            <span className="font-mono font-semibold text-purple-400">
               {formatCurrency(volume)}
             </span>
           );
@@ -226,7 +226,7 @@ export default function TradesPage() {
         cell: ({ getValue }) => {
           const pnl = Number(getValue());
           return (
-            <span className={`font-semibold ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`font-semibold ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {formatCurrency(pnl)}
             </span>
           );
@@ -238,7 +238,7 @@ export default function TradesPage() {
         cell: ({ row }) => {
           const roi = calculateTradeROI(row.original.realizedPnl, row.original.qty, row.original.price);
           return (
-            <span className={`font-semibold ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`font-semibold ${roi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {formatPercentage(roi)}
             </span>
           );
@@ -247,7 +247,7 @@ export default function TradesPage() {
       columnHelper.accessor('market', { 
         header: '🏪 Mercado',
         cell: ({ getValue }) => (
-          <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+          <span className="px-2 py-1 bg-white/10 text-white rounded text-xs">
             {getValue()}
           </span>
         )
@@ -255,7 +255,7 @@ export default function TradesPage() {
       columnHelper.accessor('tradeId', { 
         header: '🆔 Trade ID',
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-gray-500">
+          <span className="font-mono text-xs text-slate-400">
             {getValue()?.slice(-8) || '-'}
           </span>
         )
@@ -270,13 +270,20 @@ export default function TradesPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl text-white mb-2">Trades</h1>
+          <p className="text-slate-400">Histórico detalhado de operações</p>
+        </div>
+      </div>
+      
       <Toolbar>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">⏰ Período</label>
+          <label className="text-sm font-medium text-slate-300">⏰ Período</label>
           <select 
             value={period} 
             onChange={(e) => setPeriod(e.target.value)} 
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="border border-white/10 bg-white/5 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="today">📅 Hoje</option>
             <option value="week">📆 Esta Semana</option>
@@ -287,31 +294,31 @@ export default function TradesPage() {
         </div>
         {period === 'custom' && (
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">📅 Mês</label>
+            <label className="text-sm font-medium text-slate-300">📅 Mês</label>
             <input 
               type="month" 
               value={month} 
               onChange={(e) => setMonth(e.target.value)} 
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+              className="border border-white/10 bg-white/5 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             />
           </div>
         )}
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">🏪 Market</label>
+          <label className="text-sm font-medium text-slate-300">🏪 Market</label>
           <input 
             value={market} 
             onChange={(e) => setMarket(e.target.value)} 
             placeholder="SPOT/FUTURES" 
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+            className="border border-white/10 bg-white/5 text-white placeholder-slate-400 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">💰 Symbol</label>
+          <label className="text-sm font-medium text-slate-300">💰 Symbol</label>
           <input 
             value={symbol} 
             onChange={(e) => setSymbol(e.target.value)} 
             placeholder="e.g. BTCUSDT" 
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+            className="border border-white/10 bg-white/5 text-white placeholder-slate-400 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
           />
         </div>
         <a 
@@ -332,98 +339,98 @@ export default function TradesPage() {
       {rows.length > 0 && (
         <div className="space-y-4">
           {/* Métricas principais */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/5 backdrop-blur-sm rounded-lg border border-white/10">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-400">
                 {formatCurrency(rows.reduce((sum, r) => sum + Number(r.realizedPnl), 0))}
               </div>
-              <div className="text-sm text-gray-600">PnL Total</div>
+              <div className="text-sm text-slate-400">PnL Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-400">
                 {rows.filter(r => Number(r.realizedPnl) > 0).length}
               </div>
-              <div className="text-sm text-gray-600">Trades Vencedores</div>
+              <div className="text-sm text-slate-400">Trades Vencedores</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-400">
                 {rows.filter(r => Number(r.realizedPnl) < 0).length}
               </div>
-              <div className="text-sm text-gray-600">Trades Perdedores</div>
+              <div className="text-sm text-slate-400">Trades Perdedores</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-purple-400">
                 {formatCurrency(rows.reduce((sum, r) => sum + Number(r.feeValue), 0))}
               </div>
-              <div className="text-sm text-gray-600">Taxas Totais</div>
+              <div className="text-sm text-slate-400">Taxas Totais</div>
             </div>
           </div>
 
           {/* Métricas avançadas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-emerald-500/10 to-green-500/5 backdrop-blur-sm rounded-lg border border-white/10">
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-2xl font-bold text-emerald-400">
                 {formatCurrency(rows.reduce((sum, r) => sum + calculateVolume(r.qty, r.price), 0))}
               </div>
-              <div className="text-sm text-gray-600">Volume Total</div>
+              <div className="text-sm text-slate-400">Volume Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
+              <div className="text-2xl font-bold text-orange-400">
                 {rows.length > 0 ? ((rows.filter(r => Number(r.realizedPnl) > 0).length / rows.length) * 100).toFixed(1) : 0}%
               </div>
-              <div className="text-sm text-gray-600">Win Rate</div>
+              <div className="text-sm text-slate-400">Win Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-400">
                 {rows.length > 0 ? formatCurrency(Math.max(...rows.map(r => Number(r.realizedPnl)))) : 'R$ 0,00'}
               </div>
-              <div className="text-sm text-gray-600">Melhor Trade</div>
+              <div className="text-sm text-slate-400">Melhor Trade</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-400">
                 {rows.length > 0 ? formatCurrency(Math.min(...rows.map(r => Number(r.realizedPnl)))) : 'R$ 0,00'}
               </div>
-              <div className="text-sm text-gray-600">Pior Trade</div>
+              <div className="text-sm text-slate-400">Pior Trade</div>
             </div>
           </div>
 
           {/* Métricas de risco */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-red-500/10 to-pink-500/5 backdrop-blur-sm rounded-lg border border-white/10">
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-400">
                 {formatCurrency(calculateDrawdown(rows).maxDrawdown)}
               </div>
-              <div className="text-sm text-gray-600">Max Drawdown</div>
+              <div className="text-sm text-slate-400">Max Drawdown</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-pink-600">
+              <div className="text-2xl font-bold text-pink-400">
                 {formatCurrency(calculateDrawdown(rows).currentDrawdown)}
               </div>
-              <div className="text-sm text-gray-600">Drawdown Atual</div>
+              <div className="text-sm text-slate-400">Drawdown Atual</div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="relative overflow-hidden border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gradient-to-r from-white/10 to-white/5">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
-                    <th key={h.id} className="text-left px-4 py-3 text-sm font-semibold text-gray-700 border-b">
+                    <th key={h.id} className="text-left px-4 py-3 text-sm font-semibold text-white border-b border-white/10">
                       {flexRender(h.column.columnDef.header, h.getContext())}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-white/10">
               {table.getRowModel().rows.map((r, index) => (
-                <tr key={r.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                <tr key={r.id} className={`hover:bg-white/5 transition-colors ${index % 2 === 0 ? 'bg-white/5' : 'bg-white/10'}`}>
                   {r.getVisibleCells().map((c) => (
-                    <td key={c.id} className="px-4 py-3 text-sm">{flexRender(c.column.columnDef.cell, c.getContext())}</td>
+                    <td key={c.id} className="px-4 py-3 text-sm text-white">{flexRender(c.column.columnDef.cell, c.getContext())}</td>
                   ))}
                 </tr>
               ))}
@@ -432,20 +439,20 @@ export default function TradesPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
+      <div className="flex items-center justify-between bg-white/5 backdrop-blur-sm p-4 rounded-lg border border-white/10">
         <div className="flex items-center gap-2">
           <button 
-            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50" 
+            className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50" 
             disabled={page <= 1} 
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
             ← Anterior
           </button>
-          <span className="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-medium">
+          <span className="px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg font-medium">
             Página {page} de {totalPages}
           </span>
           <button 
-            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50" 
+            className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50" 
             disabled={page >= totalPages} 
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >
@@ -453,9 +460,9 @@ export default function TradesPage() {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Itens por página:</label>
+          <label className="text-sm font-medium text-slate-300">Itens por página:</label>
           <select 
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+            className="border border-white/10 bg-white/5 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={pageSize} 
             onChange={(e) => setPageSize(Number(e.target.value))}
           >

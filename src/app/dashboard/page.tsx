@@ -11,7 +11,7 @@ type TradesResponse = {
 };
 
 async function fetchTrades(month: string): Promise<TradesResponse> {
-  const h = headers();
+  const h = await headers();
   const proto = h.get('x-forwarded-proto') ?? 'http';
   const host = h.get('host') ?? 'localhost:3000';
   const url = `${proto}://${host}/api/trades?month=${encodeURIComponent(month)}`;

@@ -2,6 +2,8 @@
 
 Painel pessoal de trades da Binance com Next.js 15 (App Router), TypeScript, Tailwind, Prisma e Supabase.
 
+🚀 **Deploy automático configurado na Vercel**
+
 ### Stack
 - Next.js 15 + App Router + TypeScript
 - Tailwind CSS v4
