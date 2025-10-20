@@ -7,7 +7,7 @@ export async function sendVerificationEmail(email: string, token: string, name: 
   
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'Cripto Manager <noreply@criptomanager.com>',
+      from: 'onboarding@resend.dev', // Usando domínio do Resend
       to: [email],
       subject: 'Verifique seu email - Cripto Manager',
       html: `
