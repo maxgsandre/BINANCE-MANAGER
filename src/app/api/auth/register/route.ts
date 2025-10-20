@@ -64,8 +64,23 @@ export async function POST(req: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Erro ao criar usuário:', error);
+    
+    // Log detalhado para debug
+    if (error instanceof Error) {
+      console.error('Erro detalhado:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+    
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { 
+        error: 'Erro interno do servidor',
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : 'Erro desconhecido') : 
+          undefined
+      },
       { status: 500 }
     );
   }
