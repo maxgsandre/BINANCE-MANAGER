@@ -2,7 +2,14 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendVerificationEmail(email: string, token: string, name: string) {
+type SendEmailResult = {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+  details?: unknown;
+};
+
+export async function sendVerificationEmail(email: string, token: string, name: string): Promise<SendEmailResult> {
   const verificationUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
   
   try {
@@ -58,13 +65,13 @@ export async function sendVerificationEmail(email: string, token: string, name: 
     });
 
     if (error) {
-      console.error('Erro ao enviar email:', error);
-      return { success: false, error: 'Erro ao enviar email' };
+      console.error('Erro ao enviar email (Resend retornou error):', error);
+      return { success: false, error: 'Erro ao enviar email', details: error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error('Erro ao enviar email:', error);
-    return { success: false, error: 'Erro ao enviar email' };
+    console.error('Erro ao enviar email (exceção):', error);
+    return { success: false, error: 'Erro ao enviar email', details: error instanceof Error ? error.message : error };
   }
 }
