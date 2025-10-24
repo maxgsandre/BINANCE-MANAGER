@@ -15,10 +15,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Teste simples primeiro - apenas retornar sucesso
+    // Verificar se o email já existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Este email já está cadastrado' },
+        { status: 400 }
+      );
+    }
+
+    // Gerar token de verificação
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+    // Criar usuário no banco
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        isVerified: false,
+        verificationToken,
+        emailVerified: tokenExpiry
+      }
+    });
+
+    // Enviar email de verificação
+    const emailResult = await sendVerificationEmail(email, verificationToken, name);
+    
+    if (!emailResult.success) {
+      // Se falhou ao enviar email, remover o usuário criado
+      await prisma.user.delete({
+        where: { id: user.id }
+      });
+      
+      return NextResponse.json(
+        { error: 'Erro ao enviar email de verificação. Tente novamente.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
-      message: 'Teste de registro funcionando!',
-      data: { name, email },
+      message: 'Conta criada com sucesso! Verifique seu email para ativar a conta.',
+      data: { 
+        id: user.id,
+        name: user.name,
+        email: user.email 
+      },
       timestamp: new Date().toISOString()
     });
 
