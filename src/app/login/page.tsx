@@ -1,9 +1,10 @@
 "use client";
 import Image from 'next/image';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -27,19 +28,11 @@ function LoginForm() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Email ou senha incorretos');
-      } else {
-        router.push('/dashboard');
-      }
-    } catch (error) {
-      setError('Erro ao fazer login');
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao fazer login';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
