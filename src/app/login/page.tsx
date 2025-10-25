@@ -48,14 +48,14 @@ function LoginForm() {
             alt="Cripto Manager"
             width={200}
             height={200}
-            className="mx-auto h-40 w-40 mb-4"
+            className="mx-auto h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 mb-4"
           />
-          <h1 className="text-3xl font-bold text-white">Cripto Manager</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Cripto Manager</h1>
           <p className="text-slate-400 mt-2">Painel profissional de gestão de trades</p>
         </div>
 
         {/* Formulário de login */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-white/10">
           <h2 className="text-xl font-semibold text-white mb-6 text-center">
             Acesse sua conta
           </h2>

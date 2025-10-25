@@ -60,7 +60,7 @@ export default function CompleteSignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-white/10">
         <h1 className="text-white text-xl font-semibold mb-4">Concluir cadastro</h1>
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">

@@ -26,8 +26,8 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
 
   return (
     <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between gap-3">
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Image
@@ -44,8 +44,8 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <nav className="hidden sm:flex items-center gap-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -67,29 +67,29 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
 
             {/* User Menu */}
             {user && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div className="text-right">
-                  <p className="text-sm text-white">{user.name || user.email}</p>
-                  <p className="text-xs text-slate-400">Online</p>
+                  <p className="text-xs sm:text-sm text-white truncate max-w-[120px] sm:max-w-none">{user.name || user.email}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400">Online</p>
                 </div>
                        {user.image ? (
                          <Image
                            src={user.image}
                            alt="User"
-                           width={32}
-                           height={32}
-                           className="w-8 h-8 rounded-full"
+                           width={28}
+                           height={28}
+                           className="w-7 h-7 sm:w-8 sm:h-8 rounded-full"
                          />
                        ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold">
+                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-white text-xs sm:text-sm font-semibold">
                       {user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
                     </span>
                   </div>
                 )}
                 <button
                   onClick={onSignOut}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors text-lg sm:text-base"
                   title="Sair"
                 >
                   🚪
