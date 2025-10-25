@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendVerificationEmail } from '@/lib/email';
+// Disabled: legacy Resend test endpoint. Kept returning build errors on Vercel when RESEND_API_KEY is not set.
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,24 +10,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and name are required' }, { status: 400 });
     }
 
-    const emailResult = await sendVerificationEmail(email, testToken, name);
-
-    if (!emailResult.success) {
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to send test email',
-        error: emailResult.error,
-        details: emailResult.details,
-        diagnostics: emailResult.diagnostics,
-      }, { status: 500 });
-    }
-
     return NextResponse.json({
-      success: true,
-      message: 'Test email sent successfully',
-      data: emailResult.data,
-      diagnostics: emailResult.diagnostics,
-    });
+      disabled: true,
+      message: 'Email test route disabled. Use Firebase email-link flow instead.'
+    }, { status: 410 });
 
   } catch (error: unknown) {
     console.error('Error sending test email:', error);
