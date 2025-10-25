@@ -24,6 +24,7 @@
     "bcryptjs": "^3.0.2",
     "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
+    "firebase": "^12.4.0",
     "iconv-lite": "^0.7.0",
     "jsonwebtoken": "^9.0.2",
     "next": "15.5.4",
