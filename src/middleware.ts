@@ -1,16 +1,3 @@
-import { withAuth } from "next-auth/middleware";
-
-export default withAuth(
-  function middleware() {
-    // Add any additional middleware logic here
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
-  }
-);
-
 export const config = {
   matcher: [
     "/dashboard/:path*",
@@ -18,3 +5,8 @@ export const config = {
     "/accounts/:path*",
   ],
 };
+
+export default function middleware() {
+  // Proteção via client-side (InternalLayout). Para SSR/API, podemos adicionar verificação de cookie depois.
+  return;
+}

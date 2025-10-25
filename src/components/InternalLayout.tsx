@@ -1,24 +1,27 @@
 "use client";
 import { Navigation } from "@/components/Navigation";
-import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut as firebaseSignOut, User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 
-export default function InternalLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { data: session, status } = useSession();
+export default function InternalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setLoading(false);
+      if (!u) {
+        router.push("/login");
+      }
+    });
+    return () => unsub();
+  }, [router]);
 
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
         <div className="text-center">
@@ -29,16 +32,19 @@ export default function InternalLayout({
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!user) return null;
+
+  const uiUser = {
+    id: user.uid,
+    name: user.displayName ?? undefined,
+    email: user.email ?? undefined,
+    image: user.photoURL ?? undefined,
+  };
 
   return (
     <>
-      <Navigation user={session.user} onSignOut={() => signOut()} />
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {children}
-      </main>
+      <Navigation user={uiUser} onSignOut={() => firebaseSignOut(auth)} />
+      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
     </>
   );
 }
