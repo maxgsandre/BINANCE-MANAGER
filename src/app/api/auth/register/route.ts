@@ -44,17 +44,19 @@ export async function POST(req: NextRequest) {
 
     // Enviar email de verificação
     const emailResult = await sendVerificationEmail(email, verificationToken, name);
-    
+
     if (!emailResult.success) {
       // Se falhou ao enviar email, remover o usuário criado
       await prisma.user.delete({
         where: { id: user.id }
       });
-      
-      return NextResponse.json(
-        { error: 'Erro ao enviar email de verificação. Tente novamente.' },
-        { status: 500 }
-      );
+
+      return NextResponse.json({
+        error: 'Erro ao enviar email de verificação. Tente novamente.',
+        emailService: 'resend',
+        details: emailResult.details,
+        diagnostics: emailResult.diagnostics,
+      }, { status: 500 });
     }
 
     return NextResponse.json({

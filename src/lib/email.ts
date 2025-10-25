@@ -2,20 +2,59 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+type EmailDiagnostics = {
+  nextauthUrl?: string;
+  verificationUrl?: string;
+  from: string;
+  to: string[];
+  nodeEnv?: string;
+  vercelEnv?: string;
+  hasResendApiKey: boolean;
+  resendApiKeyLength?: number;
+};
+
 type SendEmailResult = {
   success: boolean;
   data?: unknown;
   error?: string;
   details?: unknown;
+  diagnostics?: EmailDiagnostics;
 };
 
 export async function sendVerificationEmail(email: string, token: string, name: string): Promise<SendEmailResult> {
-  const verificationUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
-  
+  const baseUrl = process.env.NEXTAUTH_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
+    || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined)
+    || 'http://localhost:3000';
+  const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
+
+  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const to = [email];
+  const diagnostics: EmailDiagnostics = {
+    nextauthUrl: process.env.NEXTAUTH_URL,
+    verificationUrl,
+    from,
+    to,
+    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV,
+    hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
+    resendApiKeyLength: process.env.RESEND_API_KEY?.length,
+  };
+
   try {
+    // Logs úteis para auditoria/debug sem expor segredos
+    console.debug('[email] Attempting to send verification email', {
+      to,
+      from,
+      nextauthUrl: diagnostics.nextauthUrl,
+      nodeEnv: diagnostics.nodeEnv,
+      vercelEnv: diagnostics.vercelEnv,
+      hasResendApiKey: diagnostics.hasResendApiKey,
+    });
+
     const { data, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev', // Usando domínio do Resend
-      to: [email],
+      from,
+      to,
       subject: 'Verifique seu email - Cripto Manager',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -65,13 +104,15 @@ export async function sendVerificationEmail(email: string, token: string, name: 
     });
 
     if (error) {
-      console.error('Erro ao enviar email (Resend retornou error):', error);
-      return { success: false, error: 'Erro ao enviar email', details: error };
+      console.error('[email] Resend returned error', { error, diagnostics });
+      return { success: false, error: 'Erro ao enviar email', details: error, diagnostics };
     }
 
-    return { success: true, data };
+    console.debug('[email] Resend send success', { data });
+    return { success: true, data, diagnostics };
   } catch (error) {
-    console.error('Erro ao enviar email (exceção):', error);
-    return { success: false, error: 'Erro ao enviar email', details: error instanceof Error ? error.message : error };
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('[email] Exception while sending email', { error: errMsg, diagnostics });
+    return { success: false, error: 'Erro ao enviar email', details: errMsg, diagnostics };
   }
 }

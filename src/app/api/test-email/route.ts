@@ -13,18 +13,20 @@ export async function POST(req: NextRequest) {
     const emailResult = await sendVerificationEmail(email, testToken, name);
 
     if (!emailResult.success) {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'Failed to send test email', 
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to send test email',
         error: emailResult.error,
         details: emailResult.details,
+        diagnostics: emailResult.diagnostics,
       }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Test email sent successfully', 
-      data: emailResult.data 
+    return NextResponse.json({
+      success: true,
+      message: 'Test email sent successfully',
+      data: emailResult.data,
+      diagnostics: emailResult.diagnostics,
     });
 
   } catch (error: unknown) {
