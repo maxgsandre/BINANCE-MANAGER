@@ -3,13 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { auth } from '@/lib/firebase/client';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { sendSignInLinkToEmail } from 'firebase/auth';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -20,17 +18,14 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      if (password !== confirmPassword) {
-        setError('As senhas não coincidem');
-        setIsLoading(false);
-        return;
-      }
-
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      if (name) {
-        await updateProfile(cred.user, { displayName: name });
-      }
-      await sendEmailVerification(cred.user);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/complete-signup?name=${encodeURIComponent(name)}`,
+        handleCodeInApp: true,
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      // Guardar para usar na página de conclusão
+      window.localStorage.setItem('signupEmail', email);
+      window.localStorage.setItem('signupName', name);
       setSuccess(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao criar conta';
@@ -68,8 +63,8 @@ export default function RegisterPage() {
             </h2>
             
             <p className="text-slate-300 mb-6">
-              Enviamos um email de verificação para <strong>{email}</strong>.
-              Após verificar, faça login normalmente com sua senha.
+              Enviamos um link para <strong>{email}</strong>. Abra o email neste dispositivo
+              e clique para completar o cadastro e definir sua senha.
             </p>
             
             <div className="space-y-3">
@@ -85,8 +80,6 @@ export default function RegisterPage() {
                   setSuccess(false);
                   setName('');
                   setEmail('');
-                  setPassword('');
-                  setConfirmPassword('');
                 }}
                 className="block w-full text-slate-400 hover:text-white transition-colors"
               >
@@ -167,38 +160,8 @@ export default function RegisterPage() {
 
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
               <p className="text-blue-400 text-sm">
-                📧 Após o cadastro, você receberá um email para verificar sua conta.
+                📧 Você receberá um link por email para concluir o cadastro e criar sua senha.
               </p>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                Senha
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
-                Confirmar senha
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
             </div>
             
             <button
