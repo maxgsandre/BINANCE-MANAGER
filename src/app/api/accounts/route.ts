@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { encrypt, decrypt } from '@/lib/encryption';
+import { encrypt } from '@/lib/encryption';
 
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization');
@@ -72,8 +72,7 @@ export async function POST(req: NextRequest) {
       name, 
       market, 
       apiKeyEnc, 
-      apiSecretEnc,
-      updatedAt: new Date() 
+      apiSecretEnc
     },
   });
   return Response.json({ ok: true, account: acc }, { status: 201 });
