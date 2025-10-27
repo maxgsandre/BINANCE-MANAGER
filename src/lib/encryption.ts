@@ -1,10 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const sodiumLib = require('libsodium-wrappers-sumo');
-
 // Chave de criptografia - em produção deve ser um secret seguro
 // TODO: Mover para variável de ambiente
 const MASTER_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-in-production-32chars!!!!';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const sodiumLib = require('libsodium-wrappers-sumo');
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let sodium: any = null;
 
 async function getSodium() {
