@@ -27,6 +27,7 @@
     "firebase": "^12.4.0",
     "iconv-lite": "^0.7.0",
     "jsonwebtoken": "^9.0.2",
+    "libsodium-wrappers-sumo": "^0.7.15",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
     "papaparse": "^5.5.2",

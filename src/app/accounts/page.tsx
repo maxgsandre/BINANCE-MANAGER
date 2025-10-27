@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { auth } from '@/lib/firebase/client';
 import InternalLayout from '@/components/InternalLayout';
 
 type Account = { id: string; name: string; market: string; createdAt: string };
@@ -12,10 +13,16 @@ export default function AccountsPage() {
   const [apiSecret, setApiSecret] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const refresh = () => {
-    fetch('/api/accounts')
+  const refresh = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    const token = await user.getIdToken();
+    fetch('/api/accounts', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then((r) => r.json())
-      .then((d) => setRows(d.rows || []));
+      .then((d) => setRows(d.results || []));
   };
 
   useEffect(() => {
@@ -26,9 +33,16 @@ export default function AccountsPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('User not authenticated');
+      
+      const token = await user.getIdToken();
       await fetch('/api/accounts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ name, market, apiKey, apiSecret }),
       });
       setName(''); setApiKey(''); setApiSecret(''); setMarket('SPOT');
