@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
-    "deploy:vercel": "vercel --prod"
+    "deploy:vercel": "vercel --prod",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",
