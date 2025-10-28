@@ -131,6 +131,9 @@ export async function syncAccount(
     let inserted = 0;
     const updated = 0;
 
+    // Criar mapa para rastrear posições (compra e venda)
+    const positions = new Map<string, Array<{ qty: number; price: number; isBuyer: boolean; time: number }>>();
+
     for (const trade of allTrades) {
       const tradeId = trade.id || `${trade.orderId}_${trade.symbol}`;
       // Se não vier side direto da API, tentar inferir de isBuyer
@@ -143,12 +146,59 @@ export async function syncAccount(
         side = 'BUY';
       }
       
+      // Calcular qty e price como números
+      const qty = Number(trade.qty || trade.quantity || '0');
+      const price = Number(trade.price);
+      
+      // Inicializar array de posições para o símbolo se não existir
+      if (!positions.has(trade.symbol)) {
+        positions.set(trade.symbol, []);
+      }
+      const symbolPositions = positions.get(trade.symbol)!;
+      
+      // Calcular PnL se for uma venda
+      let realizedPnl = trade.realizedPnl || '0';
+      
+      if (side === 'SELL' && qty > 0 && price > 0) {
+        // Buscar compras anteriores (FIFO)
+        let remainingQty = qty;
+        let totalPnL = 0;
+        
+        // Remover compras antigas e calcular PnL
+        for (let i = symbolPositions.length - 1; i >= 0 && remainingQty > 0; i--) {
+          const pos = symbolPositions[i];
+          if (pos.isBuyer && pos.qty > 0) {
+            const qtyToUse = Math.min(pos.qty, remainingQty);
+            const pnl = (price - pos.price) * qtyToUse;
+            totalPnL += pnl;
+            
+            pos.qty -= qtyToUse;
+            remainingQty -= qtyToUse;
+            
+            if (pos.qty <= 0) {
+              symbolPositions.splice(i, 1);
+            }
+          }
+        }
+        
+        realizedPnl = totalPnL.toString();
+      } else if (side === 'BUY') {
+        // Adicionar compra às posições
+        symbolPositions.push({
+          qty,
+          price,
+          isBuyer: true,
+          time: trade.time
+        });
+      }
+      
       console.log('Trade:', { 
         symbol: trade.symbol, 
         sideOriginal: trade.side,
         isBuyer: trade.isBuyer,
         sideFinal: side,
-        orderId: trade.orderId 
+        orderId: trade.orderId,
+        realizedPnl
       });
       
       try {
@@ -169,7 +219,7 @@ export async function syncAccount(
               feeValue: trade.commission,
               feeAsset: trade.commissionAsset,
               feePct: '0',
-              realizedPnl: trade.realizedPnl || '0',
+              realizedPnl: realizedPnl,
               executedAt: new Date(trade.time),
             }
           });
