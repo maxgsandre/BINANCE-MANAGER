@@ -27,51 +27,6 @@ interface BinanceTrade {
   isMaker?: boolean;
 }
 
-async function fetchBinanceAccountBalance(
-  apiKey: string,
-  apiSecret: string,
-  market: string
-): Promise<any[]> {
-  const baseUrl = market === 'FUTURES'
-    ? 'https://fapi.binance.com'
-    : 'https://api.binance.com';
-
-  const endpoint = market === 'FUTURES'
-    ? '/fapi/v2/balance'
-    : '/api/v3/account';
-
-  const params: any = {
-    timestamp: Date.now(),
-    recvWindow: 5000
-  };
-
-  const queryString = new URLSearchParams(params).toString();
-  const signature = await createSignature(queryString, apiSecret);
-  const fullUrl = `${baseUrl}${endpoint}?${queryString}&signature=${signature}`;
-
-  console.log('Binance request (account):', fullUrl.substring(0, 100) + '...');
-
-  const response = await fetch(fullUrl, {
-    headers: {
-      'X-MBX-APIKEY': apiKey,
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Binance API error:', response.status, errorText);
-    throw new Error(`Binance API error: ${response.status} - ${errorText}`);
-  }
-
-  if (market === 'FUTURES') {
-    return response.json();
-  } else {
-    // Para SPOT, retorna account.balances
-    const account = await response.json();
-    return account.balances || [];
-  }
-}
-
 async function fetchBinanceTrades(
   apiKey: string,
   apiSecret: string,

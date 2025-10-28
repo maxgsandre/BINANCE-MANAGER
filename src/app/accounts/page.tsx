@@ -84,7 +84,7 @@ export default function AccountsPage() {
       if (result.error) {
         setSyncMessage(`Erro: ${result.error}`);
       } else if (result.results && result.results.length > 0) {
-        const total = result.results.reduce((acc: number, r: any) => acc + r.inserted, 0);
+        const total = result.results.reduce((acc: number, r: { inserted: number }) => acc + r.inserted, 0);
         setSyncMessage(`Sucesso! ${total} trades sincronizados`);
       } else {
         setSyncMessage('Nenhum trade encontrado para sincronizar');
@@ -136,7 +136,7 @@ export default function AccountsPage() {
       const result = await response.json();
       
       if (result.results && result.results.length > 0) {
-        const accountResult = result.results.find((r: any) => r.accountId === accountId);
+        const accountResult = result.results.find((r: { accountId: string; inserted: number }) => r.accountId === accountId);
         if (accountResult) {
           alert(`${accountResult.inserted} trades sincronizados para esta conta`);
         } else {

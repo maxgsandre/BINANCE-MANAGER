@@ -18,8 +18,9 @@ async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   const userId = await getUserIdFromToken(req);
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

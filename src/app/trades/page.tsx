@@ -191,7 +191,7 @@ export default function TradesPage() {
       if (result.error) {
         alert(`Erro: ${result.error}`);
       } else if (result.results && result.results.length > 0) {
-        const total = result.results.reduce((acc: number, r: any) => acc + r.inserted, 0);
+        const total = result.results.reduce((acc: number, r: { inserted: number }) => acc + r.inserted, 0);
         alert(`Sucesso! ${total} trades sincronizados`);
         // Recarregar página para mostrar novos trades
         window.location.reload();
