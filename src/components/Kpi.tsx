@@ -7,9 +7,11 @@ type KpiProps = {
   trend?: 'up' | 'down' | 'neutral';
   color?: 'blue' | 'green' | 'red' | 'purple' | 'orange';
   trendValue?: string;
+  editable?: boolean;
+  onEdit?: () => void;
 };
 
-export function Kpi({ label, value, icon, trend = 'neutral', color = 'blue', trendValue }: KpiProps) {
+export function Kpi({ label, value, icon, trend = 'neutral', color = 'blue', trendValue, editable, onEdit }: KpiProps) {
   const colorClasses = {
     blue: 'from-blue-500 to-cyan-500',
     green: 'from-emerald-500 to-green-500',
@@ -43,15 +45,26 @@ export function Kpi({ label, value, icon, trend = 'neutral', color = 'blue', tre
           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center shadow-lg`}>
             <span className="text-white text-xl">{icon}</span>
           </div>
-          {trendValue && (
-            <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
-              trend === 'up' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-              trend === 'down' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
-              'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-            }`}>
-              {trendIcons[trend]} {trendValue}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {editable && onEdit && (
+              <button 
+                onClick={onEdit}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                title="Editar"
+              >
+                <span className="text-white text-sm">✏️</span>
+              </button>
+            )}
+            {trendValue && (
+              <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                trend === 'up' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
+                trend === 'down' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
+                'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+              }`}>
+                {trendIcons[trend]} {trendValue}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Title */}

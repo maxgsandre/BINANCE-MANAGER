@@ -1,35 +1,23 @@
+"use client";
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/Card';
 import { Kpi } from '@/components/Kpi';
 import { PnlLineChart } from '@/components/PnlLineChart';
 import InternalLayout from '@/components/InternalLayout';
-import { headers } from 'next/headers';
+import EditableBalanceKpi from '@/components/EditableBalanceKpi';
 
 type TradeRow = { executedAt: string | Date; realizedPnl: string };
 type TradesResponse = {
   rows: TradeRow[];
   total: number;
-  summary: { pnlMonth: string; feesTotal: string; avgFeePct: string; tradesCount: number; winRate: number };
+  summary: { pnlMonth: string; feesTotal: string; avgFeePct: string; tradesCount: number; winRate: number; initialBalance: string };
 };
 
 async function fetchTrades(month: string): Promise<TradesResponse> {
-  try {
-    const h = await headers();
-    const proto = h.get('x-forwarded-proto') ?? 'https';
-    const host = h.get('host') ?? 'localhost:3000';
-    const url = `${proto}://${host}/api/trades?month=${encodeURIComponent(month)}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('failed to fetch');
-    return res.json();
-  } catch (error) {
-    // Fallback para produção
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    const url = `${baseUrl}/api/trades?month=${encodeURIComponent(month)}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('failed to fetch');
-    return res.json();
-  }
+  const url = `/api/trades?month=${encodeURIComponent(month)}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('failed to fetch');
+  return res.json();
 }
 
 function getMonth() {
@@ -47,9 +35,15 @@ function aggregateDaily(rows: TradeRow[]) {
   return Array.from(map.entries()).map(([date, pnl]) => ({ date, pnl }));
 }
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
+  const [data, setData] = useState<TradesResponse | null>(null);
   const month = getMonth();
-  const data = await fetchTrades(month);
+
+  useEffect(() => {
+    fetchTrades(month).then(setData);
+  }, [month]);
+
+  if (!data) return <InternalLayout><div className="text-white">Carregando...</div></InternalLayout>;
 
   const { summary, rows } = data;
   const daily = aggregateDaily(rows);
@@ -72,6 +66,13 @@ export default async function DashboardPage() {
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <EditableBalanceKpi
+          label="Saldo Inicial"
+          value={summary.initialBalance}
+          icon="💳"
+          color="purple"
+          month={month}
+        />
         <Kpi 
           label="PnL Total" 
           value={`R$ ${summary.pnlMonth}`} 
@@ -87,14 +88,6 @@ export default async function DashboardPage() {
           color="green"
           trend={summary.winRate >= 0.5 ? 'up' : 'down'}
           trendValue={summary.winRate >= 0.5 ? '+2.1%' : '-1.8%'}
-        />
-        <Kpi 
-          label="Token Futuro" 
-          value={`R$ ${summary.feesTotal}`} 
-          icon="📊" 
-          color="purple"
-          trend="up"
-          trendValue="+5.8%"
         />
         <Kpi 
           label="Total de Trades" 
