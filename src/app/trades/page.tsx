@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Toolbar } from '@/components/Toolbar';
 import InternalLayout from '@/components/InternalLayout';
+import { auth } from '@/lib/firebase/client';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 
 type TradeRow = {
@@ -117,6 +118,10 @@ export default function TradesPage() {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<TradeRow[]>([]);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncStartDate, setSyncStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [syncEndDate, setSyncEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [syncSymbols, setSyncSymbols] = useState('BTCUSDT\nETHUSDT\nBNBUSDT');
 
   useEffect(() => {
     const currentMonth = period === 'custom' ? month : getPeriodFilter(period);
@@ -161,6 +166,42 @@ export default function TradesPage() {
         );
       });
   }, [month, period, market, symbol, page, pageSize]);
+
+  const syncTrades = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const token = await user.getIdToken();
+      const symbolsArray = syncSymbols.split('\n').filter(s => s.trim());
+      const response = await fetch('/api/jobs/sync-all', { 
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          startDate: syncStartDate, 
+          endDate: syncEndDate,
+          symbols: symbolsArray 
+        })
+      });
+      const result = await response.json();
+      
+      if (result.error) {
+        alert(`Erro: ${result.error}`);
+      } else if (result.results && result.results.length > 0) {
+        const total = result.results.reduce((acc: number, r: any) => acc + r.inserted, 0);
+        alert(`Sucesso! ${total} trades sincronizados`);
+        // Recarregar página para mostrar novos trades
+        window.location.reload();
+      } else {
+        alert('Nenhum trade encontrado para sincronizar');
+      }
+    } catch (error) {
+      alert(`Erro ao sincronizar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
 
   const columnHelper = createColumnHelper<TradeRow>();
   const columns = useMemo(
@@ -277,6 +318,13 @@ export default function TradesPage() {
           <h1 className="text-3xl text-white mb-2">Trades</h1>
           <p className="text-slate-400">Histórico detalhado de operações</p>
         </div>
+        <button 
+          onClick={() => setShowSyncModal(true)}
+          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 flex items-center gap-2"
+        >
+          <span>🔄</span>
+          Sincronizar
+        </button>
       </div>
       
       <Toolbar>
@@ -476,6 +524,62 @@ export default function TradesPage() {
         </div>
       </div>
       </div>
+
+      {/* Modal de Sincronização */}
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-xl p-6 max-w-md w-full border border-white/10">
+            <h3 className="text-xl text-white font-semibold mb-4">Configurar sincronização</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-slate-300 text-sm mb-2">Data inicial</label>
+                <input 
+                  type="date"
+                  value={syncStartDate}
+                  onChange={(e) => setSyncStartDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 text-sm mb-2">Data final</label>
+                <input 
+                  type="date"
+                  value={syncEndDate}
+                  onChange={(e) => setSyncEndDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 text-sm mb-2">Moedas (uma por linha)</label>
+                <textarea 
+                  value={syncSymbols}
+                  onChange={(e) => setSyncSymbols(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white h-32"
+                  placeholder="BTCUSDT&#10;ETHUSDT&#10;BNBUSDT"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={syncTrades}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+                >
+                  Sincronizar
+                </button>
+                <button 
+                  onClick={() => setShowSyncModal(false)}
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </InternalLayout>
   );
 }

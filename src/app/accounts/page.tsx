@@ -12,6 +12,11 @@ export default function AccountsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncDays, setSyncDays] = useState(7);
+  const [syncSymbols, setSyncSymbols] = useState(['BTCUSDT', 'ETHUSDT', 'BNBUSDT']);
 
   const refresh = async () => {
     const user = auth.currentUser;
@@ -53,11 +58,98 @@ export default function AccountsPage() {
   };
 
   const syncAll = async () => {
-    setLoading(true);
+    setSyncing(true);
+    setSyncMessage('Sincronizando trades...');
+    setShowSyncModal(false);
+    
     try {
-      await fetch('/api/jobs/sync-all', { method: 'POST' });
+      const user = auth.currentUser;
+      if (!user) {
+        setSyncMessage('Erro: usuário não autenticado');
+        return;
+      }
+      
+      const token = await user.getIdToken();
+      const response = await fetch('/api/jobs/sync-all', { 
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ days: syncDays, symbols: syncSymbols })
+      });
+      const result = await response.json();
+      console.log('Sync result:', result);
+      
+      if (result.error) {
+        setSyncMessage(`Erro: ${result.error}`);
+      } else if (result.results && result.results.length > 0) {
+        const total = result.results.reduce((acc: number, r: any) => acc + r.inserted, 0);
+        setSyncMessage(`Sucesso! ${total} trades sincronizados`);
+      } else {
+        setSyncMessage('Nenhum trade encontrado para sincronizar');
+      }
+      
+      refresh(); // Atualizar lista de contas
+    } catch (error) {
+      setSyncMessage(`Erro ao sincronizar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      console.error('Sync error:', error);
     } finally {
-      setLoading(false);
+      setSyncing(false);
+      setTimeout(() => setSyncMessage(''), 3000);
+    }
+  };
+
+  const deleteAccount = async (accountId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta conta?')) return;
+    
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const token = await user.getIdToken();
+      await fetch(`/api/accounts/${accountId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      refresh();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Erro ao excluir conta');
+    }
+  };
+
+  const syncAccount = async (accountId: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const token = await user.getIdToken();
+      const response = await fetch('/api/jobs/sync-all', { 
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const result = await response.json();
+      
+      if (result.results && result.results.length > 0) {
+        const accountResult = result.results.find((r: any) => r.accountId === accountId);
+        if (accountResult) {
+          alert(`${accountResult.inserted} trades sincronizados para esta conta`);
+        } else {
+          alert('Nenhum trade encontrado para sincronizar');
+        }
+      } else {
+        alert('Nenhum trade encontrado para sincronizar');
+      }
+      
+      refresh();
+    } catch (error) {
+      console.error('Sync error:', error);
+      alert('Erro ao sincronizar');
     }
   };
 
@@ -149,14 +241,19 @@ export default function AccountsPage() {
                 Salvar
               </button>
               <button 
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2" 
-                disabled={loading} 
+                className={`${syncing ? 'bg-blue-500/20 border-blue-500/30' : 'bg-white/10 hover:bg-white/20'} text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${syncing ? 'cursor-wait' : 'cursor-pointer'}`}
+                disabled={loading || syncing} 
                 type="button" 
-                onClick={syncAll}
+                onClick={() => setShowSyncModal(true)}
               >
-                <span>🔄</span>
-                Sincronizar agora
+                <span className={syncing ? 'animate-spin' : ''}>🔄</span>
+                {syncing ? 'Sincronizando...' : 'Sincronizar agora'}
               </button>
+              {syncMessage && (
+                <div className={`mt-2 px-3 py-2 rounded ${syncMessage.includes('Erro') ? 'bg-red-500/20 text-red-400' : syncMessage.includes('Sucesso') ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                  {syncMessage}
+                </div>
+              )}
             </div>
           </form>
         </div>
@@ -228,10 +325,18 @@ export default function AccountsPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Sincronizar">
+                        <button 
+                          className="p-2 hover:bg-white/10 rounded-lg transition-colors" 
+                          title="Sincronizar"
+                          onClick={() => syncAccount(r.id)}
+                        >
                           <span className="text-slate-400 hover:text-white">🔄</span>
                         </button>
-                        <button className="p-2 hover:bg-red-500/20 rounded-lg transition-colors" title="Excluir">
+                        <button 
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors" 
+                          title="Excluir"
+                          onClick={() => deleteAccount(r.id)}
+                        >
                           <span className="text-slate-400 hover:text-red-400">🗑️</span>
                         </button>
                       </div>
@@ -244,6 +349,54 @@ export default function AccountsPage() {
         </div>
       </div>
 
+      {/* Modal de Sincronização */}
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-xl p-6 max-w-md w-full border border-white/10">
+            <h3 className="text-xl text-white font-semibold mb-4">Configurar sincronização</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-slate-300 text-sm mb-2">Dias para buscar</label>
+                <input 
+                  type="number"
+                  value={syncDays}
+                  onChange={(e) => setSyncDays(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                  min="1"
+                  max="30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 text-sm mb-2">Moedas (uma por linha)</label>
+                <textarea 
+                  value={syncSymbols.join('\n')}
+                  onChange={(e) => setSyncSymbols(e.target.value.split('\n').filter(s => s.trim()))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white h-32"
+                  placeholder="BTCUSDT&#10;ETHUSDT&#10;BNBUSDT"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={syncAll}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+                >
+                  Sincronizar
+                </button>
+                <button 
+                  onClick={() => setShowSyncModal(false)}
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dica de Segurança */}
       <div className="relative overflow-hidden border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-cyan-500/5 backdrop-blur-sm rounded-xl">
         <div className="p-6">
@@ -255,7 +408,8 @@ export default function AccountsPage() {
               <h3 className="text-lg text-white font-semibold">Dica de Segurança</h3>
               <p className="text-slate-300 text-sm mt-1">
                 Para gerar suas chaves de API, acesse sua conta Binance → API Management. 
-                Certifique-se de habilitar apenas as permissões necessárias e nunca compartilhe suas chaves.
+                Certifique-se de habilitar permissão de <strong>leitura de trades</strong> e adicionar seu IP à lista de permissões.
+                Nunca compartilhe suas chaves.
               </p>
             </div>
           </div>
