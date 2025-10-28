@@ -14,6 +14,7 @@ export interface TradesSummary {
   avgFeePct: string;
   tradesCount: number;
   winRate: number; // 0..1
+  initialBalance: string; // saldo inicial do mês
 }
 
 export interface PaginatedResult<Row> {

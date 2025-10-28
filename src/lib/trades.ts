@@ -113,12 +113,32 @@ export async function getTrades(
     executedAt: t.executedAt,
   }));
 
+  // Buscar saldo inicial do mês (se existir)
+  let balanceBRL = '0';
+  try {
+    // Buscar todos os saldos do mês (não precisamos do userId aqui pois é um resumo geral)
+    const monthlyBalances = await prisma.monthlyBalance.findMany({
+      where: { month: query.month }
+    });
+    
+    // Pegar o último saldo salvo (mais recente)
+    if (monthlyBalances.length > 0) {
+      const lastBalance = monthlyBalances.sort((a, b) => 
+        b.updatedAt.getTime() - a.updatedAt.getTime()
+      )[0];
+      balanceBRL = lastBalance.initialBalance;
+    }
+  } catch (error) {
+    console.error('Erro ao buscar saldo inicial:', error);
+  }
+
   const summary = {
     pnlMonth: pnl.toString(),
     feesTotal: fees.toString(),
     avgFeePct: (trades.length > 0 ? (feePctSum / trades.length) : 0).toString(),
     tradesCount: total,
     winRate: total > 0 ? wins / total : 0,
+    initialBalance: balanceBRL,
   };
 
   return { rows, total, summary };
