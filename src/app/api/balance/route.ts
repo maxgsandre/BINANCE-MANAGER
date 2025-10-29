@@ -56,30 +56,45 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   const signature = createSignature(queryString, apiSecret);
   const fullUrl = `${baseUrl}${endpoint}?${queryString}&signature=${signature}`;
   
-  console.log(`[BALANCE] Calling Binance API: ${market}`);
-  console.log(`[BALANCE] Using time offset: ${offset}ms`);
+  const logCall = `[BALANCE] Calling Binance API: ${market} at ${fullUrl.split('?')[0]}`;
+  const logOffset = `[BALANCE] Using time offset: ${offset}ms, timestamp: ${params.timestamp}`;
+  console.log(logCall);
+  console.log(logOffset);
   
-  const response = await fetch(fullUrl, {
-    headers: {
-      'X-MBX-APIKEY': apiKey,
-    },
-    cache: 'no-store',
-  });
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      headers: {
+        'X-MBX-APIKEY': apiKey,
+      },
+      cache: 'no-store',
+    });
+  } catch (fetchError) {
+    const errorMsg = `[BALANCE] Network error calling Binance: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
 
   const usedWeight = response.headers.get('x-mbx-used-weight-1m');
-  console.log(`[BALANCE] Response status: ${response.status}, used weight: ${usedWeight}`);
+  const logStatus = `[BALANCE] Response status: ${response.status}, used weight: ${usedWeight}`;
+  console.log(logStatus);
 
   const text = await response.text();
+  const logText = `[BALANCE] Response text length: ${text.length}, first 200 chars: ${text.substring(0, 200)}`;
+  console.log(logText);
+  
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
-    console.error(`[BALANCE] Failed to parse JSON. Response: ${text.substring(0, 200)}`);
+    const errorMsg = `[BALANCE] Failed to parse JSON. Response: ${text.substring(0, 500)}`;
+    console.error(errorMsg);
     throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
   }
 
   if (!response.ok) {
-    console.error(`[BALANCE] Binance API error: ${JSON.stringify(data)}`);
+    const errorMsg = `[BALANCE] Binance API error ${response.status}: ${JSON.stringify(data)}`;
+    console.error(errorMsg);
     throw new Error(`Binance ${response.status}: ${JSON.stringify(data)}`);
   }
 
@@ -87,7 +102,14 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   
   const balancesCount = dataTyped.balances?.length || 0;
   const assetsCount = dataTyped.assets?.length || 0;
-  console.log(`[BALANCE] Market: ${market}, Raw balances: ${balancesCount}, Raw assets: ${assetsCount}`);
+  const logRaw = `[BALANCE] Market: ${market}, Raw balances: ${balancesCount}, Raw assets: ${assetsCount}`;
+  console.log(logRaw);
+  
+  // Log sample balances for debugging (first 3)
+  if (dataTyped.balances && dataTyped.balances.length > 0) {
+    const sample = dataTyped.balances.slice(0, 3).map(b => `${b.asset}: free=${b.free}, locked=${b.locked}`);
+    console.log(`[BALANCE] Sample balances (first 3): ${sample.join('; ')}`);
+  }
   
   if (market === 'FUTURES') {
     const assets = dataTyped.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
@@ -95,19 +117,29 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
       free: asset.availableBalance,
       locked: asset.walletBalance,
     })) || [];
-    console.log(`[BALANCE] Returning ${assets.length} FUTURES assets (from ${assetsCount} total)`);
+    const logReturn = `[BALANCE] Returning ${assets.length} FUTURES assets (from ${assetsCount} total)`;
+    console.log(logReturn);
     return assets;
   } else {
     const allBalances = dataTyped.balances || [];
-    const nonZeroBalances = allBalances.filter((b: { free: string; locked: string }) => 
-      Number(b.free) > 0 || Number(b.locked) > 0
-    );
+    const nonZeroBalances = allBalances.filter((b: { free: string; locked: string }) => {
+      const free = Number(b.free);
+      const locked = Number(b.locked);
+      return free > 0 || locked > 0;
+    });
     const balances = nonZeroBalances.map((b: { asset: string; free: string; locked: string }) => ({
       asset: b.asset,
       free: b.free,
       locked: b.locked,
     }));
-    console.log(`[BALANCE] Returning ${balances.length} SPOT balances (from ${balancesCount} total, ${nonZeroBalances.length} non-zero)`);
+    const logReturn = `[BALANCE] Returning ${balances.length} SPOT balances (from ${balancesCount} total, ${nonZeroBalances.length} non-zero)`;
+    console.log(logReturn);
+    if (balances.length === 0 && allBalances.length > 0) {
+      console.log(`[BALANCE] WARNING: All ${allBalances.length} balances are zero!`);
+      // Log first 5 balances for debugging
+      const first5 = allBalances.slice(0, 5).map(b => `${b.asset}: free=${b.free}, locked=${b.locked}`);
+      console.log(`[BALANCE] First 5 balances: ${first5.join('; ')}`);
+    }
     return balances;
   }
 }
@@ -217,7 +249,10 @@ export async function GET(req: NextRequest) {
         console.log(log4);
         debugLogs.push(log4);
         
+        debugLogs.push(`[BALANCE] About to call fetchBinanceBalance for ${account.market}`);
+        
         const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market, timeOffset);
+        
         const log5 = `[BALANCE] Fetched ${balances.length} assets for ${account.name}`;
         console.log(log5);
         debugLogs.push(log5);
@@ -226,6 +261,8 @@ export async function GET(req: NextRequest) {
           const log6 = `[BALANCE] Assets: ${balances.map(b => `${b.asset}(${Number(b.free) + Number(b.locked)})`).join(', ')}`;
           console.log(log6);
           debugLogs.push(log6);
+        } else {
+          debugLogs.push(`[BALANCE] WARNING: No assets returned from Binance API for ${account.name}`);
         }
         
         for (const bal of balances) {
@@ -239,9 +276,14 @@ export async function GET(req: NextRequest) {
           }
         }
       } catch (error) {
-        const errorMsg = `[BALANCE] Error fetching balance for account ${account.name}: ${error instanceof Error ? error.message : String(error)}`;
-        console.error(errorMsg);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        const fullError = `[BALANCE] Error fetching balance for account ${account.name}: ${errorMsg}${errorStack ? `\nStack: ${errorStack}` : ''}`;
+        console.error(fullError);
         debugLogs.push(`ERROR: ${errorMsg}`);
+        if (errorStack) {
+          debugLogs.push(`STACK: ${errorStack.split('\n').slice(0, 3).join(' -> ')}`);
+        }
       }
     }
     
