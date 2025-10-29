@@ -70,8 +70,22 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
       if (response.ok) {
         const data = await response.json();
         console.log('[EditableBalanceKpi] Balance data:', data);
-        setCurrentBalanceBRL(data.balance || '0');
-        setCurrentBalanceUSDT(data.balanceUSDT || '0');
+        
+        if (data.ok) {
+          // Nova API retorna assets array
+          const totalUSDT = data.assets?.reduce((sum: number, a: { asset: string; free: string; locked: string }) => {
+            // Converte para USDT simplificadamente (assumindo que tudo que não é USDT vale 0 por enquanto)
+            if (a.asset === 'USDT' || a.asset === 'BUSD') {
+              return sum + Number(a.free || 0) + Number(a.locked || 0);
+            }
+            return sum;
+          }, 0) || 0;
+          
+          setCurrentBalanceBRL(totalUSDT * 5.37); // Cotação aproximada
+          setCurrentBalanceUSDT(totalUSDT);
+        } else {
+          console.error('[EditableBalanceKpi] API returned error:', data.error);
+        }
       } else {
         const errorText = await response.text();
         console.error('[EditableBalanceKpi] Failed to fetch balance:', response.status, errorText);
