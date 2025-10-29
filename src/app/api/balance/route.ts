@@ -4,8 +4,8 @@ import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
-// Testando nova região: 'sfo1' (São Francisco, EUA)
-export const preferredRegion = 'sfo1';
+// Alternando região para 'iad1' (Washington, EUA)
+export const preferredRegion = 'iad1';
 export const dynamic = 'force-dynamic';
 
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {

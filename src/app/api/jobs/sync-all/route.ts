@@ -2,8 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { syncAccount } from '@/lib/sync/binance';
 
 export const runtime = 'nodejs';
-// Testando nova região: 'sfo1' (São Francisco, EUA)
-export const preferredRegion = 'sfo1';
+// Alternando região para 'iad1' (Washington, EUA)
+export const preferredRegion = 'iad1';
 
 async function getUserIdFromToken(authHeader: string | null): Promise<string | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
