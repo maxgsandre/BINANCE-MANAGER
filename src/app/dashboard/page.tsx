@@ -75,7 +75,7 @@ export default function DashboardPage() {
         />
         <Kpi 
           label="PnL Total" 
-          value={`R$ ${summary.pnlMonth}`} 
+          value={`R$ ${Number(summary.pnlMonth).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
           icon="💰" 
           color="blue"
           trend={Number(summary.pnlMonth) >= 0 ? 'up' : 'down'}
