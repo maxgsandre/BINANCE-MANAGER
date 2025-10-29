@@ -11,6 +11,61 @@ async function createSignature(queryString: string, secret: string): Promise<str
   return crypto.createHmac('sha256', secret).update(queryString).digest('hex');
 }
 
+async function fetchBinanceAccountBalance(
+  apiKey: string,
+  apiSecret: string,
+  market: string
+): Promise<{ asset: string; free: string; locked: string }[]> {
+  const baseUrl = market === 'FUTURES' 
+    ? 'https://fapi.binance.com' 
+    : 'https://api.binance.com';
+  
+  const endpoint = market === 'FUTURES'
+    ? '/fapi/v2/account'
+    : '/api/v3/account';
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const params: any = {};
+  params.recvWindow = 5000;
+  params.timestamp = Date.now();
+  
+  const queryString = new URLSearchParams(params).toString();
+  const signature = await createSignature(queryString, apiSecret);
+  const fullUrl = `${baseUrl}${endpoint}?${queryString}&signature=${signature}`;
+  
+  const response = await fetch(fullUrl, {
+    headers: {
+      'X-MBX-APIKEY': apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Binance API error:', response.status, errorText);
+    throw new Error(`Binance API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  
+  // Para SPOT, retorna balances array
+  // Para FUTURES, retorna assets com totalWalletBalance
+  if (market === 'FUTURES') {
+    return data.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
+      asset: asset.asset,
+      free: asset.availableBalance,
+      locked: asset.walletBalance,
+    })) || [];
+  } else {
+    return data.balances?.filter((b: { free: string; locked: string }) => 
+      Number(b.free) > 0 || Number(b.locked) > 0
+    ).map((b: { asset: string; free: string; locked: string }) => ({
+      asset: b.asset,
+      free: b.free,
+      locked: b.locked,
+    })) || [];
+  }
+}
+
 interface BinanceTrade {
   id?: number;
   orderId: number;

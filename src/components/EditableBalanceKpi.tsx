@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase/client';
 
 type EditableBalanceKpiProps = {
@@ -31,6 +31,36 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
   const [editValue, setEditValue] = useState(value);
   const [displayValue, setDisplayValue] = useState(value);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState('0');
+  const [loadingBalance, setLoadingBalance] = useState(false);
+
+  useEffect(() => {
+    fetchCurrentBalance();
+  }, []);
+
+  const fetchCurrentBalance = async () => {
+    setLoadingBalance(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      const response = await fetch('/api/balance', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentBalance(data.balance || '0');
+      }
+    } catch (error) {
+      console.error('Error fetching current balance:', error);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -134,6 +164,22 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
 
         <p className="text-slate-400 text-sm mb-1">{label}</p>
         <p className="text-white text-2xl tracking-tight">R$ {displayValue}</p>
+        
+        {/* Saldo Atual */}
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <p className="text-slate-400 text-xs mb-1">Saldo Atual (Binance)</p>
+          <p className="text-white text-lg tracking-tight flex items-center gap-2">
+            {loadingBalance ? (
+              <span className="animate-pulse text-slate-400">Carregando...</span>
+            ) : (
+              <>
+                <span className={`${Number(currentBalance) >= Number(displayValue) ? 'text-green-400' : 'text-red-400'}`}>
+                  R$ {currentBalance}
+                </span>
+              </>
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );
