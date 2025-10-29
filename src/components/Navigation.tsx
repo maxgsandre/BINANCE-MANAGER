@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 interface User {
@@ -18,6 +18,7 @@ interface NavigationProps {
 
 export function Navigation({ user, onSignOut }: NavigationProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
@@ -90,15 +91,30 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
                       <p className="text-slate-400 text-sm">{user.email}</p>
                     </div>
                     <div className="p-2">
-                      <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => {
+                          router.push('/settings');
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <span className="text-lg">⚙️</span>
                         <span>Configurações</span>
                       </button>
-                      <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => {
+                          router.push('/settings/security');
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <span className="text-lg">🔒</span>
                         <span>Alterar Senha</span>
                       </button>
-                      <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => {
+                          router.push('/stats');
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <span className="text-lg">📊</span>
                         <span>Estatísticas</span>
                       </button>
@@ -135,7 +151,7 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
 
       {/* Mobile & Desktop Menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-white/10 bg-black/20 backdrop-blur-xl">
+        <div className="border-t border-white/10 bg-black/20 backdrop-blur-xl relative z-[100]">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
