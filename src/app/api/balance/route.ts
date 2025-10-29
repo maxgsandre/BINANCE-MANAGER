@@ -85,7 +85,9 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
 
   const dataTyped = data as { balances?: Array<{ asset: string; free: string; locked: string }>; assets?: Array<{ asset: string; availableBalance: string; walletBalance: string }> };
   
-  console.log(`[BALANCE] Market: ${market}, Has balances?`, dataTyped.balances?.length || dataTyped.assets?.length);
+  const balancesCount = dataTyped.balances?.length || 0;
+  const assetsCount = dataTyped.assets?.length || 0;
+  console.log(`[BALANCE] Market: ${market}, Raw balances: ${balancesCount}, Raw assets: ${assetsCount}`);
   
   if (market === 'FUTURES') {
     const assets = dataTyped.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
@@ -93,17 +95,19 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
       free: asset.availableBalance,
       locked: asset.walletBalance,
     })) || [];
-    console.log(`[BALANCE] Returning ${assets.length} FUTURES assets`);
+    console.log(`[BALANCE] Returning ${assets.length} FUTURES assets (from ${assetsCount} total)`);
     return assets;
   } else {
-    const balances = dataTyped.balances?.filter((b: { free: string; locked: string }) => 
+    const allBalances = dataTyped.balances || [];
+    const nonZeroBalances = allBalances.filter((b: { free: string; locked: string }) => 
       Number(b.free) > 0 || Number(b.locked) > 0
-    ).map((b: { asset: string; free: string; locked: string }) => ({
+    );
+    const balances = nonZeroBalances.map((b: { asset: string; free: string; locked: string }) => ({
       asset: b.asset,
       free: b.free,
       locked: b.locked,
-    })) || [];
-    console.log(`[BALANCE] Returning ${balances.length} SPOT balances`);
+    }));
+    console.log(`[BALANCE] Returning ${balances.length} SPOT balances (from ${balancesCount} total, ${nonZeroBalances.length} non-zero)`);
     return balances;
   }
 }
@@ -165,6 +169,8 @@ async function getPriceInUSDT(asset: string): Promise<number> {
 
 export async function GET(req: NextRequest) {
   const userId = await getUserIdFromToken(req);
+  const debugLogs: string[] = [];
+  
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -172,17 +178,24 @@ export async function GET(req: NextRequest) {
   try {
     // Sync time sync uma vez
     const timeOffset = await getServerTimeOffset();
-    console.log(`[BALANCE] Starting with time offset: ${timeOffset}ms`);
+    const log1 = `[BALANCE] Starting with time offset: ${timeOffset}ms`;
+    console.log(log1);
+    debugLogs.push(log1);
 
     const accounts = await prisma.binanceAccount.findMany({
       where: { userId }
     });
 
+    const log2 = `[BALANCE] Found ${accounts.length} accounts`;
+    console.log(log2);
+    debugLogs.push(log2);
+
     if (accounts.length === 0) {
       return Response.json({ 
         ok: true, 
         balance: '0',
-        accounts: []
+        accounts: [],
+        debug: { logs: debugLogs }
       });
     }
 
@@ -191,16 +204,29 @@ export async function GET(req: NextRequest) {
     
     for (const account of accounts) {
       try {
-        console.log(`[BALANCE] Processing account: ${account.name}`);
+        const log3 = `[BALANCE] Processing account: ${account.name} (${account.market})`;
+        console.log(log3);
+        debugLogs.push(log3);
+        
         const apiKey = await decrypt(account.apiKeyEnc);
         const apiSecret = await decrypt(account.apiSecretEnc);
         
         // Log fingerprint sem expor a chave
         const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
-        console.log(`[BALANCE] Decrypted credentials hash: ${keyHash}`);
+        const log4 = `[BALANCE] Decrypted credentials hash: ${keyHash}`;
+        console.log(log4);
+        debugLogs.push(log4);
         
         const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market, timeOffset);
-        console.log(`[BALANCE] Fetched ${balances.length} assets for ${account.name}`);
+        const log5 = `[BALANCE] Fetched ${balances.length} assets for ${account.name}`;
+        console.log(log5);
+        debugLogs.push(log5);
+        
+        if (balances.length > 0) {
+          const log6 = `[BALANCE] Assets: ${balances.map(b => `${b.asset}(${Number(b.free) + Number(b.locked)})`).join(', ')}`;
+          console.log(log6);
+          debugLogs.push(log6);
+        }
         
         for (const bal of balances) {
           const existing = allBalances.find(b => b.asset === bal.asset);
@@ -213,12 +239,21 @@ export async function GET(req: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`[BALANCE] Error fetching balance for account ${account.name}:`, error);
+        const errorMsg = `[BALANCE] Error fetching balance for account ${account.name}: ${error instanceof Error ? error.message : String(error)}`;
+        console.error(errorMsg);
+        debugLogs.push(`ERROR: ${errorMsg}`);
       }
     }
     
-    console.log(`[BALANCE] Total assets found: ${allBalances.length}`);
-    console.log(`[BALANCE] Assets:`, allBalances.map(b => `${b.asset}: ${b.total}`).join(', '));
+    const log7 = `[BALANCE] Total assets found: ${allBalances.length}`;
+    console.log(log7);
+    debugLogs.push(log7);
+    
+    if (allBalances.length > 0) {
+      const log8 = `[BALANCE] Assets: ${allBalances.map(b => `${b.asset}: ${b.total}`).join(', ')}`;
+      console.log(log8);
+      debugLogs.push(log8);
+    }
 
     // Se não tem assets, retorna zero
     if (allBalances.length === 0) {
@@ -231,7 +266,8 @@ export async function GET(req: NextRequest) {
         accounts: accounts.map(acc => ({ id: acc.id, name: acc.name })),
         debug: {
           allBalancesLength: allBalances.length,
-          accountsCount: accounts.length
+          accountsCount: accounts.length,
+          logs: debugLogs
         }
       });
     }
@@ -268,18 +304,34 @@ export async function GET(req: NextRequest) {
     }
 
     const totalBRL = totalUSDT * brlPerUsdt;
+    
+    const log9 = `[BALANCE] Final calculation: ${totalUSDT.toFixed(8)} USDT = ${totalBRL.toFixed(2)} BRL`;
+    console.log(log9);
+    debugLogs.push(log9);
 
     return Response.json({ 
       ok: true, 
-      balance: totalBRL.toFixed(8),
+      balance: totalBRL.toFixed(2),
       balanceUSDT: totalUSDT.toFixed(8),
       exchangeRate: brlPerUsdt.toFixed(2),
       assets: assetsWithValue,
-      accounts: accounts.map(acc => ({ id: acc.id, name: acc.name }))
+      accounts: accounts.map(acc => ({ id: acc.id, name: acc.name })),
+      debug: {
+        logs: debugLogs,
+        allBalancesLength: allBalances.length,
+        accountsCount: accounts.length
+      }
     });
   } catch (error) {
-    console.error('Error fetching balance:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    const errorMsg = `[BALANCE] FATAL ERROR: ${error instanceof Error ? error.message : String(error)}`;
+    console.error(errorMsg);
+    return Response.json({ 
+      error: 'Internal server error',
+      debug: {
+        error: errorMsg,
+        logs: debugLogs
+      }
+    }, { status: 500 });
   }
 }
 

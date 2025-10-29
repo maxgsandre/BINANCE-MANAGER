@@ -70,11 +70,33 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
       if (response.ok) {
         const data = await response.json();
         console.log('[EditableBalanceKpi] Balance data:', data);
+        
+        // Mostrar logs de debug se existirem
+        if (data.debug?.logs) {
+          console.group('[EditableBalanceKpi] API Debug Logs:');
+          data.debug.logs.forEach((log: string) => console.log(log));
+          console.groupEnd();
+        }
+        
+        if (data.debug?.error) {
+          console.error('[EditableBalanceKpi] API Error:', data.debug.error);
+        }
+        
         setCurrentBalanceBRL(data.balance || '0');
         setCurrentBalanceUSDT(data.balanceUSDT || '0');
       } else {
         const errorText = await response.text();
         console.error('[EditableBalanceKpi] Failed to fetch balance:', response.status, errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.debug?.logs) {
+            console.group('[EditableBalanceKpi] Error Debug Logs:');
+            errorData.debug.logs.forEach((log: string) => console.error(log));
+            console.groupEnd();
+          }
+        } catch {
+          // Ignore parse errors
+        }
       }
     } catch (error) {
       console.error('[EditableBalanceKpi] Error fetching current balance:', error);
