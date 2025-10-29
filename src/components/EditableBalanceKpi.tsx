@@ -165,7 +165,7 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
         </div>
 
         <p className="text-slate-400 text-sm mb-1">{label}</p>
-        <p className="text-white text-2xl tracking-tight">R$ {displayValue}</p>
+        <p className="text-white text-2xl tracking-tight">R$ {Number(displayValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         
         {/* Saldo Atual */}
         <div className="mt-3 pt-3 border-t border-white/10">
@@ -176,9 +176,9 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
             ) : (
               <>
                 <span className={`font-semibold ${Number(currentBalanceBRL) >= Number(displayValue) ? 'text-green-400' : 'text-red-400'}`}>
-                  R$ {parseFloat(currentBalanceBRL).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  R$ {Number(currentBalanceBRL).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
-                <span className="text-slate-500 text-sm">({parseFloat(currentBalanceUSDT).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT)</span>
+                <span className="text-slate-500 text-sm">({Number(currentBalanceUSDT).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT)</span>
               </>
             )}
           </p>
