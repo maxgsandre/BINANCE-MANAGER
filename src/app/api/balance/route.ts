@@ -40,11 +40,15 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   const signature = createSignature(queryString, apiSecret);
   const fullUrl = `${baseUrl}${endpoint}?${queryString}&signature=${signature}`;
   
+  console.log(`[BALANCE] Calling Binance API: ${market} at ${fullUrl.substring(0, 100)}...`);
+  
   const response = await fetch(fullUrl, {
     headers: {
       'X-MBX-APIKEY': apiKey,
     },
   });
+
+  console.log(`[BALANCE] Binance API response status: ${response.status}`);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -53,21 +57,27 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   }
 
   const data = await response.json();
+  console.log(`[BALANCE] Binance API response data keys:`, Object.keys(data));
+  console.log(`[BALANCE] Market: ${market}, Has balances?`, market === 'FUTURES' ? data.assets?.length : data.balances?.length);
   
   if (market === 'FUTURES') {
-    return data.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
+    const assets = data.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
       asset: asset.asset,
       free: asset.availableBalance,
       locked: asset.walletBalance,
     })) || [];
+    console.log(`[BALANCE] Returning ${assets.length} FUTURES assets`);
+    return assets;
   } else {
-    return data.balances?.filter((b: { free: string; locked: string }) => 
+    const balances = data.balances?.filter((b: { free: string; locked: string }) => 
       Number(b.free) > 0 || Number(b.locked) > 0
     ).map((b: { asset: string; free: string; locked: string }) => ({
       asset: b.asset,
       free: b.free,
       locked: b.locked,
     })) || [];
+    console.log(`[BALANCE] Returning ${balances.length} SPOT balances`);
+    return balances;
   }
 }
 
