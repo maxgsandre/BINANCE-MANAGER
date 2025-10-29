@@ -83,11 +83,14 @@ export default function DashboardPage() {
         />
         <Kpi 
           label="ROI Acumulado" 
-          value={`${(summary.winRate * 100).toFixed(1)}%`} 
+          value={summary.initialBalance !== '0' 
+            ? `${((Number(summary.pnlMonth) / Number(summary.initialBalance)) * 100).toFixed(2)}%`
+            : '0,00%'
+          } 
           icon="📈" 
           color="green"
-          trend={summary.winRate >= 0.5 ? 'up' : 'down'}
-          trendValue={summary.winRate >= 0.5 ? '+2.1%' : '-1.8%'}
+          trend={Number(summary.pnlMonth) >= 0 ? 'up' : 'down'}
+          trendValue={Number(summary.pnlMonth) >= 0 ? '+2.1%' : '-1.8%'}
         />
         <Kpi 
           label="Total de Trades" 
