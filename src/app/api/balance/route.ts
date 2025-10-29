@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
 
+export const runtime = 'nodejs';
+export const preferredRegion = 'gru1';
+export const dynamic = 'force-dynamic';
+
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -18,11 +22,23 @@ async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
   }
 }
 
+// Sincroniza horário com servidor Binance para evitar erro -1021
+async function getServerTimeOffset(): Promise<number> {
+  try {
+    const res = await fetch('https://api.binance.com/api/v3/time', { cache: 'no-store' });
+    const { serverTime } = await res.json();
+    return Number(serverTime) - Date.now();
+  } catch (error) {
+    console.error('[BALANCE] Time sync error:', error);
+    return 0; // Fallback
+  }
+}
+
 function createSignature(queryString: string, secret: string): string {
   return crypto.createHmac('sha256', secret).update(queryString).digest('hex');
 }
 
-async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: string): Promise<{ asset: string; free: string; locked: string }[]> {
+async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: string, offset: number): Promise<{ asset: string; free: string; locked: string }[]> {
   const baseUrl = market === 'FUTURES' 
     ? 'https://fapi.binance.com' 
     : 'https://api.binance.com';
@@ -33,32 +49,41 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const params: any = {};
-  params.recvWindow = 5000;
-  params.timestamp = Date.now();
+  params.recvWindow = 10000; // Aumentado para 10s
+  params.timestamp = Date.now() + offset; // Usar time sync
   
   const queryString = new URLSearchParams(params).toString();
   const signature = createSignature(queryString, apiSecret);
   const fullUrl = `${baseUrl}${endpoint}?${queryString}&signature=${signature}`;
   
-  console.log(`[BALANCE] Calling Binance API: ${market} at ${fullUrl.substring(0, 100)}...`);
+  console.log(`[BALANCE] Calling Binance API: ${market}`);
+  console.log(`[BALANCE] Using time offset: ${offset}ms`);
   
   const response = await fetch(fullUrl, {
     headers: {
       'X-MBX-APIKEY': apiKey,
     },
+    cache: 'no-store',
   });
 
-  console.log(`[BALANCE] Binance API response status: ${response.status}`);
+  const usedWeight = response.headers.get('x-mbx-used-weight-1m');
+  console.log(`[BALANCE] Response status: ${response.status}, used weight: ${usedWeight}`);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Binance API error:', response.status, errorText);
-    throw new Error(`Binance API error: ${response.status} - ${errorText}`);
+  const text = await response.text();
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error(`[BALANCE] Failed to parse JSON. Response: ${text.substring(0, 200)}`);
+    throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
   }
 
-  const data = await response.json();
-  console.log(`[BALANCE] Binance API response data keys:`, Object.keys(data));
-  console.log(`[BALANCE] Market: ${market}, Has balances?`, market === 'FUTURES' ? data.assets?.length : data.balances?.length);
+  if (!response.ok) {
+    console.error(`[BALANCE] Binance API error: ${JSON.stringify(data)}`);
+    throw new Error(`Binance ${response.status}: ${JSON.stringify(data)}`);
+  }
+
+  console.log(`[BALANCE] Market: ${market}, Has balances?`, (data as { balances?: unknown[]; assets?: unknown[] }).balances?.length || (data as { assets?: unknown[] }).assets?.length);
   
   if (market === 'FUTURES') {
     const assets = data.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
@@ -143,6 +168,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Sync time sync uma vez
+    const timeOffset = await getServerTimeOffset();
+    console.log(`[BALANCE] Starting with time offset: ${timeOffset}ms`);
+
     const accounts = await prisma.binanceAccount.findMany({
       where: { userId }
     });
@@ -163,9 +192,12 @@ export async function GET(req: NextRequest) {
         console.log(`[BALANCE] Processing account: ${account.name}`);
         const apiKey = await decrypt(account.apiKeyEnc);
         const apiSecret = await decrypt(account.apiSecretEnc);
-        console.log(`[BALANCE] Decrypted credentials for ${account.name}`);
         
-        const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market);
+        // Log fingerprint sem expor a chave
+        const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
+        console.log(`[BALANCE] Decrypted credentials hash: ${keyHash}`);
+        
+        const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market, timeOffset);
         console.log(`[BALANCE] Fetched ${balances.length} assets for ${account.name}`);
         
         for (const bal of balances) {
