@@ -26,8 +26,18 @@ async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
 async function getServerTimeOffset(): Promise<number> {
   try {
     const res = await fetch('https://api.binance.com/api/v3/time', { cache: 'no-store' });
-    const { serverTime } = await res.json();
-    return Number(serverTime) - Date.now();
+    if (!res.ok) {
+      console.warn(`[BALANCE] Time sync endpoint returned ${res.status}, using 0 offset`);
+      return 0;
+    }
+    const data = await res.json();
+    const serverTime = Number(data.serverTime);
+    if (isNaN(serverTime)) {
+      console.warn('[BALANCE] Invalid serverTime from Binance, using 0 offset');
+      return 0;
+    }
+    const offset = serverTime - Date.now();
+    return isNaN(offset) ? 0 : offset;
   } catch (error) {
     console.error('[BALANCE] Time sync error:', error);
     return 0; // Fallback
@@ -93,9 +103,19 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   }
 
   if (!response.ok) {
-    const errorMsg = `[BALANCE] Binance API error ${response.status}: ${JSON.stringify(data)}`;
-    console.error(errorMsg);
-    throw new Error(`Binance ${response.status}: ${JSON.stringify(data)}`);
+    const errorCode = (data as { code?: number }).code;
+    const errorMsg = (data as { msg?: string }).msg || JSON.stringify(data);
+    
+    // Erro 451: Localização bloqueada pela Binance
+    if (response.status === 451) {
+      const detailedError = `[BALANCE] Binance bloqueou esta requisição (451 - Restricted Location). A Vercel pode estar em uma região/IP bloqueado pela Binance. Mensagem: ${errorMsg}`;
+      console.error(detailedError);
+      throw new Error(`BINANCE_BLOCKED: ${errorMsg}`);
+    }
+    
+    const errorFullMsg = `[BALANCE] Binance API error ${response.status}: ${JSON.stringify(data)}`;
+    console.error(errorFullMsg);
+    throw new Error(`Binance ${response.status}: ${errorMsg}`);
   }
 
   const dataTyped = data as { balances?: Array<{ asset: string; free: string; locked: string }>; assets?: Array<{ asset: string; availableBalance: string; walletBalance: string }> };
@@ -280,7 +300,15 @@ export async function GET(req: NextRequest) {
         const errorStack = error instanceof Error ? error.stack : undefined;
         const fullError = `[BALANCE] Error fetching balance for account ${account.name}: ${errorMsg}${errorStack ? `\nStack: ${errorStack}` : ''}`;
         console.error(fullError);
-        debugLogs.push(`ERROR: ${errorMsg}`);
+        
+        // Tratar especificamente o erro 451 (Bloqueio de IP/Localização)
+        if (errorMsg.includes('BINANCE_BLOCKED') || errorMsg.includes('451')) {
+          debugLogs.push(`ERROR 451: Binance bloqueou esta requisição. A Vercel está em uma região bloqueada pela Binance.`);
+          debugLogs.push(`SOLUÇÃO: Configure uma API Route em outra região ou use um proxy.`);
+        } else {
+          debugLogs.push(`ERROR: ${errorMsg}`);
+        }
+        
         if (errorStack) {
           debugLogs.push(`STACK: ${errorStack.split('\n').slice(0, 3).join(' -> ')}`);
         }
@@ -297,8 +325,11 @@ export async function GET(req: NextRequest) {
       debugLogs.push(log8);
     }
 
-    // Se não tem assets, retorna zero
+    // Se não tem assets, retorna zero (mas sempre retorna os accounts)
     if (allBalances.length === 0) {
+      // Verificar se houve erro de bloqueio da Binance
+      const hasBinanceBlock = debugLogs.some(log => log.includes('BINANCE_BLOCKED') || log.includes('451'));
+      
       return Response.json({ 
         ok: true, 
         balance: '0',
@@ -306,6 +337,10 @@ export async function GET(req: NextRequest) {
         exchangeRate: '5.37',
         assets: [],
         accounts: accounts.map(acc => ({ id: acc.id, name: acc.name })),
+        error: hasBinanceBlock ? 'BINANCE_BLOCKED' : undefined,
+        errorMessage: hasBinanceBlock 
+          ? 'A Binance bloqueou esta requisição devido à localização da Vercel. Por favor, verifique as configurações de IP/região na Binance ou considere usar uma API Route em outra região.'
+          : undefined,
         debug: {
           allBalancesLength: allBalances.length,
           accountsCount: accounts.length,

@@ -35,6 +35,7 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
   const [currentBalanceBRL, setCurrentBalanceBRL] = useState('0');
   const [currentBalanceUSDT, setCurrentBalanceUSDT] = useState('0');
   const [loadingBalance, setLoadingBalance] = useState(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
 
   useEffect(() => {
     // Wait for auth state to be ready before fetching balance
@@ -49,6 +50,7 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
 
   const fetchCurrentBalance = async () => {
     setLoadingBalance(true);
+    setBalanceError(null); // Reset error state
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -82,6 +84,13 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
           console.error('[EditableBalanceKpi] API Error:', data.debug.error);
         }
         
+        // Verificar se há erro de bloqueio da Binance
+        if (data.error === 'BINANCE_BLOCKED' && data.errorMessage) {
+          setBalanceError(data.errorMessage);
+        } else {
+          setBalanceError(null);
+        }
+        
         setCurrentBalanceBRL(data.balance || '0');
         setCurrentBalanceUSDT(data.balanceUSDT || '0');
       } else {
@@ -94,12 +103,16 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
             errorData.debug.logs.forEach((log: string) => console.error(log));
             console.groupEnd();
           }
+          if (errorData.errorMessage) {
+            setBalanceError(errorData.errorMessage);
+          }
         } catch {
           // Ignore parse errors
         }
       }
     } catch (error) {
       console.error('[EditableBalanceKpi] Error fetching current balance:', error);
+      setBalanceError('Erro ao conectar com a API. Tente novamente mais tarde.');
     } finally {
       setLoadingBalance(false);
     }
@@ -223,6 +236,11 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
               </>
             )}
           </p>
+          {balanceError && (
+            <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-xs leading-relaxed">{balanceError}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
