@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { syncAccount } from '@/lib/sync/binance';
 
+export const runtime = 'nodejs';
+// Mudado para 'iad1' (EUA) para evitar bloqueio da Binance na região gru1 (Brasil)
+export const preferredRegion = 'iad1';
+
 async function getUserIdFromToken(authHeader: string | null): Promise<string | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
   

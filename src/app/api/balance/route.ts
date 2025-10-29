@@ -4,7 +4,9 @@ import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
-export const preferredRegion = 'gru1';
+// Mudado de 'gru1' (Brasil) para 'iad1' (Washington, EUA) 
+// porque a Binance bloqueia requisições da região gru1
+export const preferredRegion = 'iad1';
 export const dynamic = 'force-dynamic';
 
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
