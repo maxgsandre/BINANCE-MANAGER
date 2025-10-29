@@ -176,6 +176,22 @@ export async function GET(req: NextRequest) {
     console.log(`[BALANCE] Total assets found: ${allBalances.length}`);
     console.log(`[BALANCE] Assets:`, allBalances.map(b => `${b.asset}: ${b.total}`).join(', '));
 
+    // Se não tem assets, retorna zero
+    if (allBalances.length === 0) {
+      return Response.json({ 
+        ok: true, 
+        balance: '0',
+        balanceUSDT: '0',
+        exchangeRate: '5.37',
+        assets: [],
+        accounts: accounts.map(acc => ({ id: acc.id, name: acc.name })),
+        debug: {
+          allBalancesLength: allBalances.length,
+          accountsCount: accounts.length
+        }
+      });
+    }
+
     // Buscar cotação USDT/BRL
     let brlPerUsdt = 5.37; // Fallback
     try {
