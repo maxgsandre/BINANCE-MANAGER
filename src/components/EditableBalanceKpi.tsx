@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase/client';
+import { onAuthStateChanged } from 'firebase/auth';
 
 type EditableBalanceKpiProps = {
   label: string;
@@ -36,29 +37,47 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
   const [loadingBalance, setLoadingBalance] = useState(false);
 
   useEffect(() => {
-    fetchCurrentBalance();
+    // Wait for auth state to be ready before fetching balance
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchCurrentBalance();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const fetchCurrentBalance = async () => {
     setLoadingBalance(true);
     try {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        console.error('[EditableBalanceKpi] User not authenticated');
+        return;
+      }
 
       const token = await user.getIdToken();
+      console.log('[EditableBalanceKpi] Fetching balance from /api/balance');
+      
       const response = await fetch('/api/balance', {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
+      console.log('[EditableBalanceKpi] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('[EditableBalanceKpi] Balance data:', data);
         setCurrentBalanceBRL(data.balance || '0');
         setCurrentBalanceUSDT(data.balanceUSDT || '0');
+      } else {
+        const errorText = await response.text();
+        console.error('[EditableBalanceKpi] Failed to fetch balance:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Error fetching current balance:', error);
+      console.error('[EditableBalanceKpi] Error fetching current balance:', error);
     } finally {
       setLoadingBalance(false);
     }

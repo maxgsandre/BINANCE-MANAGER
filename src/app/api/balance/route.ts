@@ -150,9 +150,13 @@ export async function GET(req: NextRequest) {
     
     for (const account of accounts) {
       try {
+        console.log(`[BALANCE] Processing account: ${account.name}`);
         const apiKey = await decrypt(account.apiKeyEnc);
         const apiSecret = await decrypt(account.apiSecretEnc);
+        console.log(`[BALANCE] Decrypted credentials for ${account.name}`);
+        
         const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market);
+        console.log(`[BALANCE] Fetched ${balances.length} assets for ${account.name}`);
         
         for (const bal of balances) {
           const existing = allBalances.find(b => b.asset === bal.asset);
@@ -165,9 +169,12 @@ export async function GET(req: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`Error fetching balance for account ${account.name}:`, error);
+        console.error(`[BALANCE] Error fetching balance for account ${account.name}:`, error);
       }
     }
+    
+    console.log(`[BALANCE] Total assets found: ${allBalances.length}`);
+    console.log(`[BALANCE] Assets:`, allBalances.map(b => `${b.asset}: ${b.total}`).join(', '));
 
     // Buscar cotação USDT/BRL
     let brlPerUsdt = 5.37; // Fallback
@@ -204,7 +211,7 @@ export async function GET(req: NextRequest) {
 
     return Response.json({ 
       ok: true, 
-      balance: totalBRL.toFixed(2),
+      balance: totalBRL.toFixed(8),
       balanceUSDT: totalUSDT.toFixed(8),
       exchangeRate: brlPerUsdt.toFixed(2),
       assets: assetsWithValue,
