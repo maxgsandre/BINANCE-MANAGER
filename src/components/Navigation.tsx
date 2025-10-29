@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 interface User {
   id: string;
@@ -17,6 +18,7 @@ interface NavigationProps {
 
 export function Navigation({ user, onSignOut }: NavigationProps) {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -45,6 +47,16 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
 
           {/* Navigation */}
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Hamburger Button - Mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="sm:hidden text-white p-2"
+              aria-label="Toggle menu"
+            >
+              <span className="text-2xl">{mobileMenuOpen ? '✕' : '☰'}</span>
+            </button>
+
+            {/* Desktop Navigation */}
             <nav className="hidden sm:flex items-center gap-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -99,6 +111,48 @@ export function Navigation({ user, onSignOut }: NavigationProps) {
           </div>
         </div>
       </div>
+      
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-t border-white/10 bg-black/20 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <nav className="flex flex-col gap-2">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/10 text-white'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-xl">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+              {user && (
+                <div className="border-t border-white/10 pt-3 mt-2">
+                  <button
+                    onClick={() => {
+                      if (onSignOut) onSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-2 px-4 py-3 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-white/5 w-full"
+                  >
+                    <span className="text-xl">🚪</span>
+                    <span>Sair</span>
+                  </button>
+                </div>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
