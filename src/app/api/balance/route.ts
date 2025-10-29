@@ -223,6 +223,10 @@ async function getPriceInUSDT(asset: string): Promise<number> {
 export async function GET(req: NextRequest) {
   const userId = await getUserIdFromToken(req);
   const debugLogs: string[] = [];
+  const currentRegion = preferredRegion;
+  const regionLog = `[BALANCE] Running in region: ${currentRegion}`;
+  console.log(regionLog);
+  debugLogs.push(regionLog);
   
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -345,6 +349,7 @@ export async function GET(req: NextRequest) {
         debug: {
           allBalancesLength: allBalances.length,
           accountsCount: accounts.length,
+          region: currentRegion,
           logs: debugLogs
         }
       });
@@ -397,7 +402,8 @@ export async function GET(req: NextRequest) {
       debug: {
         logs: debugLogs,
         allBalancesLength: allBalances.length,
-        accountsCount: accounts.length
+        accountsCount: accounts.length,
+        region: currentRegion
       }
     });
   } catch (error) {
@@ -407,7 +413,8 @@ export async function GET(req: NextRequest) {
       error: 'Internal server error',
       debug: {
         error: errorMsg,
-        logs: debugLogs
+        logs: debugLogs,
+        region: currentRegion
       }
     }, { status: 500 });
   }
