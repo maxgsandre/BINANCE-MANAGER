@@ -83,10 +83,12 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
     throw new Error(`Binance ${response.status}: ${JSON.stringify(data)}`);
   }
 
-  console.log(`[BALANCE] Market: ${market}, Has balances?`, (data as { balances?: unknown[]; assets?: unknown[] }).balances?.length || (data as { assets?: unknown[] }).assets?.length);
+  const dataTyped = data as { balances?: Array<{ asset: string; free: string; locked: string }>; assets?: Array<{ asset: string; availableBalance: string; walletBalance: string }> };
+  
+  console.log(`[BALANCE] Market: ${market}, Has balances?`, dataTyped.balances?.length || dataTyped.assets?.length);
   
   if (market === 'FUTURES') {
-    const assets = data.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
+    const assets = dataTyped.assets?.map((asset: { asset: string; availableBalance: string; walletBalance: string }) => ({
       asset: asset.asset,
       free: asset.availableBalance,
       locked: asset.walletBalance,
@@ -94,7 +96,7 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
     console.log(`[BALANCE] Returning ${assets.length} FUTURES assets`);
     return assets;
   } else {
-    const balances = data.balances?.filter((b: { free: string; locked: string }) => 
+    const balances = dataTyped.balances?.filter((b: { free: string; locked: string }) => 
       Number(b.free) > 0 || Number(b.locked) > 0
     ).map((b: { asset: string; free: string; locked: string }) => ({
       asset: b.asset,
