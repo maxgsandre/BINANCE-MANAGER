@@ -71,6 +71,61 @@ async function fetchBinanceBalance(apiKey: string, apiSecret: string, market: st
   }
 }
 
+async function getPriceInUSDT(asset: string): Promise<number> {
+  // Se já for USDT, retorna 1
+  if (asset === 'USDT' || asset === 'BUSD') return 1;
+  
+  try {
+    // Buscar preço no mercado spot da Binance
+    const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}USDT`);
+    if (response.ok) {
+      const data = await response.json();
+      return Number(data.price);
+    }
+  } catch (error) {
+    console.error(`Error fetching price for ${asset}:`, error);
+  }
+  
+  // Se não encontrar o par direto, tentar outras moedas
+  const alternatives = ['BUSD', 'BRL', 'BTC', 'ETH'];
+  for (const alt of alternatives) {
+    if (asset === alt) continue;
+    try {
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}${alt}`);
+      if (response.ok) {
+        const data = await response.json();
+        const price = Number(data.price);
+        
+        // Se encontrou via BUSD/BRL, precisamos converter para USDT
+        if (alt === 'BUSD') return price; // BUSD ~= USDT
+        if (alt === 'BRL') {
+          // Buscar cotação BRL/USDT
+          const brlUsdt = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL')
+            .then(r => r.json())
+            .then(d => 1 / Number(d.price))
+            .catch(() => 0.19); // Fallback
+          return price * brlUsdt;
+        }
+        
+        // Para BTC/ETH, buscar suas cotações em USDT
+        if (alt === 'BTC' || alt === 'ETH') {
+          const altUsdt = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${alt}USDT`)
+            .then(r => r.json())
+            .then(d => Number(d.price))
+            .catch(() => 0);
+          return price * altUsdt;
+        }
+        
+        return price;
+      }
+    } catch (error) {
+      console.error(`Error fetching price for ${asset}${alt}:`, error);
+    }
+  }
+  
+  return 0;
+}
+
 export async function GET(req: NextRequest) {
   const userId = await getUserIdFromToken(req);
   if (!userId) {
@@ -114,15 +169,45 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Calcular o saldo total em BRL (supondo que exista uma conversão)
-    // Por enquanto, retorna apenas o saldo em USDT ou BUSD
-    const usdtBalance = allBalances.find(b => b.asset === 'USDT' || b.asset === 'BUSD');
-    const totalBalance = usdtBalance?.total || 0;
+    // Buscar cotação USDT/BRL
+    let brlPerUsdt = 5.37; // Fallback
+    try {
+      const usdtBrlResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+      if (usdtBrlResponse.ok) {
+        const data = await usdtBrlResponse.json();
+        brlPerUsdt = Number(data.price);
+      }
+    } catch (error) {
+      console.error('Error fetching USDT/BRL price:', error);
+    }
+
+    // Calcular valor total em USDT para cada ativo e depois em BRL
+    let totalUSDT = 0;
+    const assetsWithValue: { asset: string; amount: number; usdtValue: number; brlValue: number }[] = [];
+    
+    for (const bal of allBalances) {
+      const priceInUSDT = await getPriceInUSDT(bal.asset);
+      const usdtValue = bal.total * priceInUSDT;
+      const brlValue = usdtValue * brlPerUsdt;
+      
+      totalUSDT += usdtValue;
+      
+      assetsWithValue.push({
+        asset: bal.asset,
+        amount: bal.total,
+        usdtValue,
+        brlValue
+      });
+    }
+
+    const totalBRL = totalUSDT * brlPerUsdt;
 
     return Response.json({ 
       ok: true, 
-      balance: totalBalance.toFixed(2),
-      assets: allBalances,
+      balance: totalBRL.toFixed(2),
+      balanceUSDT: totalUSDT.toFixed(8),
+      exchangeRate: brlPerUsdt.toFixed(2),
+      assets: assetsWithValue,
       accounts: accounts.map(acc => ({ id: acc.id, name: acc.name }))
     });
   } catch (error) {

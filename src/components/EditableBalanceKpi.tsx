@@ -31,7 +31,8 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
   const [editValue, setEditValue] = useState(value);
   const [displayValue, setDisplayValue] = useState(value);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentBalance, setCurrentBalance] = useState('0');
+  const [currentBalanceBRL, setCurrentBalanceBRL] = useState('0');
+  const [currentBalanceUSDT, setCurrentBalanceUSDT] = useState('0');
   const [loadingBalance, setLoadingBalance] = useState(false);
 
   useEffect(() => {
@@ -53,7 +54,8 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
 
       if (response.ok) {
         const data = await response.json();
-        setCurrentBalance(data.balance || '0');
+        setCurrentBalanceBRL(data.balance || '0');
+        setCurrentBalanceUSDT(data.balanceUSDT || '0');
       }
     } catch (error) {
       console.error('Error fetching current balance:', error);
@@ -167,15 +169,16 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
         
         {/* Saldo Atual */}
         <div className="mt-3 pt-3 border-t border-white/10">
-          <p className="text-slate-400 text-xs mb-1">Saldo Atual (Binance)</p>
+          <p className="text-slate-400 text-xs mb-1">Saldo Atual Total (Binance)</p>
           <p className="text-white text-lg tracking-tight flex items-center gap-2">
             {loadingBalance ? (
               <span className="animate-pulse text-slate-400">Carregando...</span>
             ) : (
               <>
-                <span className={`${Number(currentBalance) >= Number(displayValue) ? 'text-green-400' : 'text-red-400'}`}>
-                  R$ {currentBalance}
+                <span className={`font-semibold ${Number(currentBalanceBRL) >= Number(displayValue) ? 'text-green-400' : 'text-red-400'}`}>
+                  R$ {parseFloat(currentBalanceBRL).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
+                <span className="text-slate-500 text-sm">({parseFloat(currentBalanceUSDT).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT)</span>
               </>
             )}
           </p>
