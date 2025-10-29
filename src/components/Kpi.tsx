@@ -39,11 +39,11 @@ export function Kpi({ label, value, icon, trend = 'neutral', color = 'blue', tre
       {/* Gradient Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[color]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
-      <div className="relative p-6">
+      <div className="relative p-4 sm:p-6">
         {/* Icon & Badge */}
-        <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center shadow-lg`}>
-            <span className="text-white text-xl">{icon}</span>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center shadow-lg`}>
+            <span className="text-white text-lg sm:text-xl">{icon}</span>
           </div>
           <div className="flex items-center gap-2">
             {editable && onEdit && (
@@ -68,10 +68,10 @@ export function Kpi({ label, value, icon, trend = 'neutral', color = 'blue', tre
         </div>
 
         {/* Title */}
-        <p className="text-slate-400 text-sm mb-1">{label}</p>
+        <p className="text-slate-400 text-xs sm:text-sm mb-1">{label}</p>
         
         {/* Value */}
-        <p className="text-white text-2xl tracking-tight">{value}</p>
+        <p className="text-white text-xl sm:text-2xl tracking-tight break-words">{value}</p>
       </div>
     </div>
   );

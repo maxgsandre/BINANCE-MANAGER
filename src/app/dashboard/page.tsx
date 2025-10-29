@@ -50,22 +50,22 @@ export default function DashboardPage() {
 
   return (
     <InternalLayout>
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Page Title */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl text-white mb-2">Dashboard</h2>
-          <p className="text-slate-400">Visão geral dos seus trades</p>
+          <h2 className="text-2xl sm:text-3xl text-white mb-1 sm:mb-2">Dashboard</h2>
+          <p className="text-sm sm:text-base text-slate-400">Visão geral dos seus trades</p>
         </div>
-        <button className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center gap-2">
+        <button className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm sm:text-base">
           <span>📅</span>
-          Período
+          <span className="hidden sm:inline">Período</span>
           <span>⌄</span>
         </button>
       </div>
 
       {/* KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <EditableBalanceKpi
           label="Saldo Inicial"
           value={summary.initialBalance}
@@ -130,7 +130,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="relative overflow-hidden rounded-xl border-white/10 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 backdrop-blur-sm hover:from-emerald-500/20 hover:to-emerald-500/10 transition-all duration-300 cursor-pointer group">
           <div className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">

@@ -113,7 +113,7 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
 
   if (isEditing) {
     return (
-      <div className="relative overflow-hidden border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-xl p-6">
+      <div className="relative overflow-hidden border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm rounded-xl p-4 sm:p-6">
         <div className="space-y-4">
           <label className="text-slate-400 text-sm">{label}</label>
           <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
               type="text"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              className="w-32 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ex: 1000"
             />
             <button
@@ -150,10 +150,10 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
     <div className="relative overflow-hidden border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm hover:from-white/10 hover:to-white/5 transition-all duration-300 group rounded-xl">
       <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[color]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
-      <div className="relative p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center shadow-lg`}>
-            <span className="text-white text-xl">{icon}</span>
+      <div className="relative p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center shadow-lg`}>
+            <span className="text-white text-lg sm:text-xl">{icon}</span>
           </div>
           <button 
             onClick={handleEdit}
@@ -164,13 +164,13 @@ function EditableBalanceKpi({ label, value, icon = '💳', color = 'purple', mon
           </button>
         </div>
 
-        <p className="text-slate-400 text-sm mb-1">{label}</p>
-        <p className="text-white text-2xl tracking-tight">R$ {Number(displayValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <p className="text-slate-400 text-xs sm:text-sm mb-1">{label}</p>
+        <p className="text-white text-xl sm:text-2xl tracking-tight break-words">R$ {Number(displayValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         
         {/* Saldo Atual */}
-        <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-white/10">
           <p className="text-slate-400 text-xs mb-1">Saldo Atual Total (Binance)</p>
-          <p className="text-white text-lg tracking-tight flex items-center gap-2">
+          <p className="text-white text-sm sm:text-lg tracking-tight flex flex-wrap items-center gap-1 sm:gap-2">
             {loadingBalance ? (
               <span className="animate-pulse text-slate-400">Carregando...</span>
             ) : (
