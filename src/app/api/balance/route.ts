@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
 import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
+import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
+
+// Types for Binance responses
+interface SpotBalanceItem { asset: string; free: string; locked: string }
+interface FuturesAssetItem { asset: string; availableBalance: string; walletBalance: string }
+interface SpotAccountResponse { balances?: SpotBalanceItem[] }
+interface FuturesAccountResponse { assets?: FuturesAssetItem[] }
 
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization');
@@ -170,21 +177,23 @@ export async function GET(req: NextRequest) {
 
         if (proxyBase && authHeader) {
           // Usar proxy local
-          const res = await proxyGet<{ ok: boolean; data: any }>(
+          const res = await proxyGet<{ ok: boolean; data: SpotAccountResponse | FuturesAccountResponse }>(
             `/account?market=${encodeURIComponent(account.market)}&accountId=${encodeURIComponent(account.id)}`,
             authHeader
           );
           const data = res.data;
           if (account.market === 'FUTURES') {
-            balances = (data.assets || []).map((a: any) => ({
+            const assets = (data as FuturesAccountResponse).assets || [];
+            balances = assets.map((a: FuturesAssetItem) => ({
               asset: a.asset,
               free: a.availableBalance,
               locked: a.walletBalance,
             }));
           } else {
-            balances = (data.balances || [])
-              .filter((b: any) => Number(b.free) > 0 || Number(b.locked) > 0)
-              .map((b: any) => ({ asset: b.asset, free: b.free, locked: b.locked }));
+            const spotBalances = (data as SpotAccountResponse).balances || [];
+            balances = spotBalances
+              .filter((b: SpotBalanceItem) => Number(b.free) > 0 || Number(b.locked) > 0)
+              .map((b: SpotBalanceItem) => ({ asset: b.asset, free: b.free, locked: b.locked }));
           }
         } else {
           // Caminho antigo (chamada direta)
