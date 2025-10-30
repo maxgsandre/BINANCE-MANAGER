@@ -94,7 +94,10 @@ async function getPriceInUSDT(asset: string): Promise<number> {
   
   try {
     // Buscar preço no mercado spot da Binance
-    const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}USDT`);
+    const proxyBase = getProxyUrl();
+    const response = await (proxyBase
+      ? fetch(`${proxyBase}/ticker/price?symbol=${asset}USDT`)
+      : fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}USDT`));
     if (response.ok) {
       const data = await response.json();
       return Number(data.price);
@@ -108,7 +111,10 @@ async function getPriceInUSDT(asset: string): Promise<number> {
   for (const alt of alternatives) {
     if (asset === alt) continue;
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}${alt}`);
+      const proxyBase = getProxyUrl();
+      const response = await (proxyBase
+        ? fetch(`${proxyBase}/ticker/price?symbol=${asset}${alt}`)
+        : fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${asset}${alt}`));
       if (response.ok) {
         const data = await response.json();
         const price = Number(data.price);
@@ -117,7 +123,9 @@ async function getPriceInUSDT(asset: string): Promise<number> {
         if (alt === 'BUSD') return price; // BUSD ~= USDT
         if (alt === 'BRL') {
           // Buscar cotação BRL/USDT
-          const brlUsdt = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL')
+          const brlUsdt = await (getProxyUrl()
+            ? fetch(`${getProxyUrl()}/ticker/price?symbol=USDTBRL`)
+            : fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL'))
             .then(r => r.json())
             .then(d => 1 / Number(d.price))
             .catch(() => 0.19); // Fallback
@@ -126,7 +134,9 @@ async function getPriceInUSDT(asset: string): Promise<number> {
         
         // Para BTC/ETH, buscar suas cotações em USDT
         if (alt === 'BTC' || alt === 'ETH') {
-          const altUsdt = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${alt}USDT`)
+          const altUsdt = await (getProxyUrl()
+            ? fetch(`${getProxyUrl()}/ticker/price?symbol=${alt}USDT`)
+            : fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${alt}USDT`))
             .then(r => r.json())
             .then(d => Number(d.price))
             .catch(() => 0);
