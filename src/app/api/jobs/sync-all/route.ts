@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     
     for (const acc of accounts) {
       try {
-        const r = await syncAccount({ id: acc.id, market: acc.market }, startDate, endDate, symbols);
+        const r = await syncAccount({ id: acc.id, market: acc.market }, startDate, endDate, symbols, request.headers.get('authorization') || undefined);
         results.push({ 
           accountId: acc.id, 
           name: acc.name,
