@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/encryption';
+import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
 import crypto from 'crypto';
 
 export interface SyncResult {
@@ -88,8 +89,21 @@ async function fetchBinanceTrades(
   market: string,
   symbol?: string,
   startTime?: number,
-  endTime?: number
+  endTime?: number,
+  authHeader?: string
 ): Promise<BinanceTrade[]> {
+  // Usar proxy quando configurado e quando houver Authorization
+  const proxyBase = getProxyUrl();
+  if (proxyBase && authHeader) {
+    const params = new URLSearchParams();
+    params.set('market', market);
+    if (symbol) params.set('symbol', symbol);
+    if (startTime) params.set('startTime', String(startTime));
+    if (endTime) params.set('endTime', String(endTime));
+    params.set('limit', '1000');
+    const res = await proxyGet<{ ok: boolean; data: BinanceTrade[] }>(`/trades?${params.toString()}`, authHeader);
+    return res.data || [];
+  }
   const baseUrl = market === 'FUTURES' 
     ? 'https://fapi.binance.com' 
     : 'https://api.binance.com';
@@ -132,7 +146,8 @@ export async function syncAccount(
   account: { id: string; market: string }, 
   startDate: string = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
   endDate: string = new Date().toISOString().split('T')[0], 
-  symbols: string[] = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']
+  symbols: string[] = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'],
+  authHeader?: string
 ): Promise<SyncResult> {
   try {
     // Buscar conta no banco
@@ -171,7 +186,7 @@ export async function syncAccount(
       for (const symbol of symbols) {
         try {
         console.log(`Buscando trades para ${symbol} de ${new Date(currentStart).toISOString().split('T')[0]}...`);
-        const trades = await fetchBinanceTrades(apiKey, apiSecret, account.market, symbol, currentStart, currentEnd);
+        const trades = await fetchBinanceTrades(apiKey, apiSecret, account.market, symbol, currentStart, currentEnd, authHeader);
         console.log(`API retornou ${trades.length} trades para ${symbol}`);
         if (trades.length > 0) {
           console.log('Exemplo de trade completo:', trades[0]);
