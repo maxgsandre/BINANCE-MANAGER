@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
 import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
 import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
