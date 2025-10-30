@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getProxyUrl, proxyGet } from '@/lib/binanceProxyClient';
 import { decrypt } from '@/lib/encryption';
 import crypto from 'crypto';
 
@@ -158,14 +159,41 @@ export async function GET(req: NextRequest) {
     // Buscar saldo de todas as contas
     const allBalances: { asset: string; total: number }[] = [];
     
+    const proxyBase = getProxyUrl();
+    const authHeader = req.headers.get('authorization') || undefined;
+
     for (const account of accounts) {
       try {
         console.log(`[BALANCE] Processing account: ${account.name}`);
-        const apiKey = await decrypt(account.apiKeyEnc);
-        const apiSecret = await decrypt(account.apiSecretEnc);
-        console.log(`[BALANCE] Decrypted credentials for ${account.name}`);
-        
-        const balances = await fetchBinanceBalance(apiKey, apiSecret, account.market);
+
+        let balances: { asset: string; free: string; locked: string }[] = [];
+
+        if (proxyBase && authHeader) {
+          // Usar proxy local
+          const res = await proxyGet<{ ok: boolean; data: any }>(
+            `/account?market=${encodeURIComponent(account.market)}&accountId=${encodeURIComponent(account.id)}`,
+            authHeader
+          );
+          const data = res.data;
+          if (account.market === 'FUTURES') {
+            balances = (data.assets || []).map((a: any) => ({
+              asset: a.asset,
+              free: a.availableBalance,
+              locked: a.walletBalance,
+            }));
+          } else {
+            balances = (data.balances || [])
+              .filter((b: any) => Number(b.free) > 0 || Number(b.locked) > 0)
+              .map((b: any) => ({ asset: b.asset, free: b.free, locked: b.locked }));
+          }
+        } else {
+          // Caminho antigo (chamada direta)
+          const apiKey = await decrypt(account.apiKeyEnc);
+          const apiSecret = await decrypt(account.apiSecretEnc);
+          const direct = await fetchBinanceBalance(apiKey, apiSecret, account.market);
+          balances = direct;
+        }
+
         console.log(`[BALANCE] Fetched ${balances.length} assets for ${account.name}`);
         
         for (const bal of balances) {
